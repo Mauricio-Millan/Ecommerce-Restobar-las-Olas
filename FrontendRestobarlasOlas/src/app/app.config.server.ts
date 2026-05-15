@@ -1,12 +1,11 @@
-import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
-import { provideServerRendering, withRoutes } from '@angular/ssr';
+﻿import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
+import { provideServerRendering } from '@angular/ssr';
 import { appConfig } from './app.config';
-import { serverRoutes } from './app.routes.server';
-
+// Server config: on-demand rendering only (no static route extraction/pre-rendering)
+// This avoids NG0401 errors during build
 const serverConfig: ApplicationConfig = {
   providers: [
-    provideServerRendering(withRoutes(serverRoutes))
+    provideServerRendering()
   ]
 };
-
 export const config = mergeApplicationConfig(appConfig, serverConfig);

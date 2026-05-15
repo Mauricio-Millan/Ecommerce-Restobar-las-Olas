@@ -1,1 +1,103 @@
-/* You can add global styles to this file, and also import other style files */
+
+@use '@angular/material' as mat;
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
+
+html {
+  color-scheme: light;
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+:root {
+  --primary: #1f6f8b;
+  --accent: #8b5e3c;
+  --bg: #f6f4ef;
+  --text: #233238;
+}
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  background: linear-gradient(180deg, #f4f7f9 0%, var(--bg) 100%);
+  color: var(--mat-sys-on-surface);
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 480px;
+}
+
+.auth-card {
+  border-left: 6px solid var(--primary);
+}
+
+.auth-card h2 {
+  margin-top: 0;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.auth-message {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.auth-message.success {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.auth-message.error {
+  background: #ffebee;
+  color: #b00020;
+}
+
+.footer-link {
+  margin-top: 16px;
+}
+
+.footer-link a {
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 16px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
