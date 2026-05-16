@@ -5,6 +5,11 @@
 /tmp
 /out-tsc
 /bazel-out
+# Agents
+/agent/dist
+/agent/out-tsc
+.agents
+
 
 # Node
 /node_modules

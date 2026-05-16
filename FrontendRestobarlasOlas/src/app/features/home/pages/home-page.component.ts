@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
-import { AppNavbarComponent } from '../../../shared/components/app-navbar.component';
+
 import { Agregado } from '../../../core/catalog/agregado.model';
 import { Plato } from '../../../core/catalog/plato.model';
 import { PlatosService } from '../../../core/catalog/platos.service';
@@ -13,11 +13,9 @@ import { MatDividerModule } from '@angular/material/divider';
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, AppNavbarComponent, MatCardModule, MatChipsModule, MatCheckboxModule, MatDividerModule],
+  imports: [CommonModule, MatCardModule, MatChipsModule, MatCheckboxModule, MatDividerModule],
   template: `
     <div class="home-shell">
-      <app-navbar></app-navbar>
-
       <section class="banner-placeholder" aria-label="Banner principal pendiente"></section>
 
       <main class="content-grid">
