@@ -28,10 +28,12 @@ public class PlatoAgregados {
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idPlato")
     @JoinColumn(name = "id_plato")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Plato plato;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @MapsId("idAgregado")
     @JoinColumn(name = "id_agregado")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Agregado agregado;
 }

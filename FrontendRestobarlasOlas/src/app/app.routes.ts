@@ -1,4 +1,6 @@
-import { Routes } from '@angular/router';
+import { Routes, Router } from '@angular/router';
+import { inject } from '@angular/core';
+import { AuthService } from './core/auth/auth.service';
 import { authRoutes } from './features/auth/auth.routes';
 import { adminGuard } from './core/auth/admin.guard';
 import { MainLayoutComponent } from './core/layout/main-layout.component';
@@ -39,12 +41,25 @@ export const routes: Routes = [
         loadComponent: () => import('./features/home/pages/home-page.component').then((m) => m.HomePageComponent)
       },
       {
+        path: 'cocina',
+        canActivate: [() => {
+          const auth = inject(AuthService);
+          if (auth.hasRole('COCINERO') || auth.hasRole('ADMIN')) return true;
+          return inject(Router).parseUrl('/login');
+        }],
+        loadComponent: () => import('./features/kitchen/pages/kitchen-board.component').then((m) => m.KitchenBoardComponent)
+      },
+      {
         path: 'menu',
         loadComponent: () => import('./features/menu/pages/menu-page.component').then((m) => m.MenuPageComponent)
       },
       {
         path: 'carrito',
         loadComponent: () => import('./features/cart/pages/cart-page.component').then((m) => m.CartPageComponent)
+      },
+      {
+        path: 'checkout',
+        loadComponent: () => import('./features/checkout/pages/checkout-page.component').then((m) => m.CheckoutPageComponent)
       }
     ]
   },

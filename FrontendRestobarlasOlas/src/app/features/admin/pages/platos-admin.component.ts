@@ -12,6 +12,7 @@ import { PlatosService } from '../../../core/catalog/platos.service';
 import { Plato } from '../../../core/catalog/plato.model';
 import { CategoriasService } from '../../../core/catalog/categorias.service';
 import { Categoria } from '../../../core/catalog/categoria.model';
+import { StorageService } from '../../../core/storage/storage.service';
 
 @Component({
   selector: 'platos-admin',
@@ -48,14 +49,20 @@ import { Categoria } from '../../../core/catalog/categoria.model';
             <mat-label>Precio</mat-label>
             <input matInput type="number" step="0.01" formControlName="precio" />
           </mat-form-field>
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>URL imagen</mat-label>
-            <input matInput formControlName="urlImagen" />
-          </mat-form-field>
+          <div class="file-upload full-width" style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+            <button type="button" mat-stroked-button color="primary" (click)="imageInput.click()">
+              <mat-icon>upload_file</mat-icon> Subir Imagen
+            </button>
+            <input hidden type="file" #imageInput accept="image/*" (change)="onImageSelected($event)" />
+            <span class="file-name" *ngIf="selectedImage()" style="font-size: 0.85rem; color: #1f6f8b;">{{ selectedImage()?.name }}</span>
+            <span class="file-name" *ngIf="!selectedImage() && platoForm.get('urlImagen')?.value" style="font-size: 0.85rem; color: #666;">Imagen actual cargada</span>
+          </div>
           <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
           <div class="actions">
-            <button mat-flat-button color="primary" type="submit">Guardar</button>
-            <button mat-stroked-button type="button" (click)="resetPlatoForm()">Limpiar</button>
+            <button mat-flat-button color="primary" type="submit" [disabled]="isSaving()">
+              {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+            </button>
+            <button mat-stroked-button type="button" (click)="resetPlatoForm()" [disabled]="isSaving()">Limpiar</button>
           </div>
         </form>
       </section>
@@ -131,14 +138,17 @@ export class PlatosAdminComponent implements OnInit {
   private fb = inject(FormBuilder);
   private platosService = inject(PlatosService);
   private categoriasService = inject(CategoriasService);
+  private storageService = inject(StorageService);
 
   platos = signal<Plato[]>([]);
   categorias = signal<Categoria[]>([]);
   editingPlatoId = signal<number | null>(null);
   loadingPlatos = signal(false);
   loadingCategorias = signal(false);
+  isSaving = signal(false);
   errorPlatos = signal<string | null>(null);
   errorCategorias = signal<string | null>(null);
+  selectedImage = signal<File | null>(null);
 
   platoForm = this.fb.group({
     nombre: ['', [Validators.required]],
@@ -183,24 +193,54 @@ export class PlatosAdminComponent implements OnInit {
     }
   }
 
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedImage.set(input.files[0]);
+    }
+  }
+
   async savePlato() {
     if (this.platoForm.invalid) return;
+    
+    this.isSaving.set(true);
+    let finalUrl = this.platoForm.get('urlImagen')?.value;
+
+    if (this.selectedImage()) {
+      try {
+        finalUrl = await this.storageService.uploadPlatoImage(this.selectedImage()!);
+      } catch (error) {
+        console.error('Error subiendo imagen de plato', error);
+        alert('Error al subir la imagen. Verifica que el bucket "Platos" exista en Supabase y tenga políticas RLS para INSERT.');
+        this.isSaving.set(false);
+        return;
+      }
+    }
+
     const raw = this.platoForm.getRawValue();
     const payload: Plato = {
       nombre: String(raw.nombre ?? ''),
       descripcion: (raw.descripcion ?? undefined) as string | undefined,
       precio: Number(raw.precio),
-      urlImagen: raw.urlImagen ?? undefined,
+      urlImagen: finalUrl ?? undefined,
       activo: Boolean(raw.activo),
       categoria: raw.categoriaId ? { id: Number(raw.categoriaId), nombre: undefined } : undefined
     };
-    if (this.editingPlatoId()) {
-      await this.platosService.update(this.editingPlatoId()!, payload).toPromise();
-    } else {
-      await this.platosService.create(payload).toPromise();
+
+    try {
+      if (this.editingPlatoId()) {
+        await this.platosService.update(this.editingPlatoId()!, payload).toPromise();
+      } else {
+        await this.platosService.create(payload).toPromise();
+      }
+      this.resetPlatoForm();
+      await this.loadPlatos();
+    } catch (error) {
+      console.error('Error guardando plato', error);
+      alert('Error al guardar el plato.');
+    } finally {
+      this.isSaving.set(false);
     }
-    this.resetPlatoForm();
-    await this.loadPlatos();
   }
 
   editPlato(plato: Plato) {
@@ -223,6 +263,7 @@ export class PlatosAdminComponent implements OnInit {
 
   resetPlatoForm() {
     this.editingPlatoId.set(null);
+    this.selectedImage.set(null);
     this.platoForm.reset({ nombre: '', descripcion: '', precio: 0, urlImagen: '', activo: true, categoriaId: null });
   }
 }

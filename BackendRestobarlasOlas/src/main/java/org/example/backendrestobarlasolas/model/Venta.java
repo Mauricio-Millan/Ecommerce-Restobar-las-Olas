@@ -1,5 +1,6 @@
 package org.example.backendrestobarlasolas.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,14 +51,28 @@ public class Venta {
     private Boolean esDelivery;
 
     @Column(name = "estado_venta", length = 50)
-    private String estadoVenta;
+    @jakarta.persistence.Convert(converter = VentaEstadoConverter.class)
+    private VentaEstado estadoVenta;
 
     @Column(name = "fecha_venta")
     private OffsetDateTime fechaVenta;
 
-    @JsonIgnore
+    @Column(name = "metodo_pago", length = 50)
+    private String metodoPago;
+
+    @Column(name = "tipo_comprobante", length = 50)
+    private String tipoComprobante;
+
+    @Column(name = "numero_comprobante", length = 50)
+    private String numeroComprobante;
+
+    @Column(name = "voucher_url", columnDefinition = "TEXT")
+    private String voucherUrl;
+
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
     @OneToMany(mappedBy = "venta", fetch = FetchType.LAZY, cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
+    @JsonAlias({"detalleVenta", "detalle_venta", "items"})
     private List<DetalleVenta> detalles = new ArrayList<>();
 
     @PrePersist
@@ -69,7 +84,7 @@ public class Venta {
             esDelivery = Boolean.FALSE;
         }
         if (estadoVenta == null) {
-            estadoVenta = "Pendiente";
+            estadoVenta = VentaEstado.NUEVO;
         }
         if (fechaVenta == null) {
             fechaVenta = OffsetDateTime.now();

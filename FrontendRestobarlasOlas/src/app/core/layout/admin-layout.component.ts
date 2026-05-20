@@ -39,7 +39,7 @@ import { CommonModule } from '@angular/common';
       </aside>
 
       <div class="main-content">
-        <app-navbar [showAdminLink]="false" title="Restobar Las Olas" subtitle="Panel de Control"></app-navbar>
+        <app-navbar title="Restobar Las Olas" subtitle="Panel de Control"></app-navbar>
         <main class="content-area">
           <router-outlet></router-outlet>
         </main>

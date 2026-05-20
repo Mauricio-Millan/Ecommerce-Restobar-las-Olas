@@ -4,13 +4,17 @@ import { Router, RouterLink } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { AuthService } from '../../core/auth/auth.service';
 import { SessionService } from '../../core/auth/session.service';
+import { CartService } from '../../core/cart/cart.service';
+import { CartModalComponent } from './cart-modal.component';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, RouterLink, MatToolbarModule, MatButtonModule, MatIconModule, MatBadgeModule, MatDialogModule],
   template: `
     <mat-toolbar class="topbar">
       <div class="customer-panel">
@@ -30,7 +34,15 @@ import { SessionService } from '../../core/auth/session.service';
         <a mat-button routerLink="/">Inicio</a>
         <a mat-button routerLink="/login" *ngIf="!isAuthenticated()">Login</a>
         <a mat-button routerLink="/register" *ngIf="!isAuthenticated()">Registro</a>
-        <a mat-button routerLink="/admin" *ngIf="showAdminLink && isAdmin()">Admin</a>
+        <button mat-button type="button" [disabled]="!isKitchen()" (click)="goToKitchen()">Cocina</button>
+        <button mat-button type="button" [disabled]="!isAdmin()" (click)="goToAdmin()">Admin</button>
+        
+        <button mat-icon-button (click)="openCart()" class="cart-btn">
+          <mat-icon [matBadge]="cartService.cartItemCount()" 
+                    [matBadgeHidden]="cartService.cartItemCount() === 0" 
+                    matBadgeColor="warn">shopping_cart</mat-icon>
+        </button>
+
         <button mat-flat-button color="accent" type="button" *ngIf="isAuthenticated()" (click)="logout()">
           <mat-icon>logout</mat-icon>
           Salir
@@ -157,10 +169,11 @@ export class AppNavbarComponent implements OnInit {
   private auth = inject(AuthService);
   private session = inject(SessionService);
   private router = inject(Router);
+  private dialog = inject(MatDialog);
+  cartService = inject(CartService);
 
   @Input() title = 'Restobar Las Olas';
   @Input() subtitle = 'Sabores marinos, cocina de barrio y atencion cercana';
-  @Input() showAdminLink = true;
 
   isAuthenticated = signal(false);
   customerName = signal('Invitado');
@@ -188,11 +201,36 @@ export class AppNavbarComponent implements OnInit {
     return this.isAuthenticated() && this.auth.isAdmin();
   }
 
+  isKitchen() {
+    return this.isAuthenticated() && (this.auth.hasRole('COCINERO') || this.auth.hasRole('ADMIN'));
+  }
+
+  goToKitchen() {
+    if (this.isKitchen()) {
+      void this.router.navigateByUrl('/cocina');
+    }
+  }
+
+  goToAdmin() {
+    if (this.isAdmin()) {
+      void this.router.navigateByUrl('/admin');
+    }
+  }
+
   async logout() {
     await this.auth.signOut();
     this.isAuthenticated.set(false);
     this.customerName.set('Invitado');
     this.customerStatus.set('No has iniciado sesion');
     await this.router.navigateByUrl('/login');
+  }
+
+  openCart() {
+    this.dialog.open(CartModalComponent, {
+      width: '400px',
+      maxWidth: '90vw',
+      position: { top: '80px', right: '20px' },
+      panelClass: 'cart-dialog-container'
+    });
   }
 }
