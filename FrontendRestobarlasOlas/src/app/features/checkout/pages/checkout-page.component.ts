@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -22,83 +22,145 @@ import { VentaPayload, VentaDetallePayload } from '../../../core/ventas/venta.mo
   selector: 'app-checkout-page',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, 
-    MatInputModule, MatSelectModule, MatButtonModule, MatSlideToggleModule, 
+    DecimalPipe, ReactiveFormsModule, MatCardModule, MatFormFieldModule,
+    MatInputModule, MatSelectModule, MatButtonModule, MatSlideToggleModule,
     MatIconModule, MatDividerModule
   ],
   template: `
     <div class="checkout-container">
       <div class="checkout-grid">
-        
+
         <!-- Formulario a la izquierda -->
         <section class="form-section">
           <mat-card class="checkout-card">
             <mat-card-header>
               <mat-card-title>Detalles de facturación y envío</mat-card-title>
             </mat-card-header>
-            
+
             <mat-card-content>
               <form [formGroup]="checkoutForm" (ngSubmit)="procesarPago()">
-                
+
                 <div class="form-group">
                   <mat-slide-toggle formControlName="esDelivery" color="primary">
                     Es pedido para Delivery
                   </mat-slide-toggle>
                 </div>
 
-                <mat-form-field appearance="outline" class="full-width" *ngIf="checkoutForm.get('esDelivery')?.value">
-                  <mat-label>Dirección de Entrega</mat-label>
-                  <input matInput formControlName="direccionEntrega" placeholder="Ej. Av. Las Olas 123" />
-                  <mat-error *ngIf="checkoutForm.get('direccionEntrega')?.hasError('required')">
-                    La dirección es obligatoria para el delivery
-                  </mat-error>
-                </mat-form-field>
+                @if (checkoutForm.get('esDelivery')?.value) {
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Dirección de Entrega</mat-label>
+                    <input matInput formControlName="direccionEntrega" placeholder="Ej. Av. Las Olas 123" />
+                    <mat-error>La dirección es obligatoria para el delivery</mat-error>
+                  </mat-form-field>
+                }
 
                 <div class="row-group">
                   <mat-form-field appearance="outline" class="full-width">
                     <mat-label>Método de Pago</mat-label>
                     <mat-select formControlName="metodoPago">
-                      <mat-option value="Tarjeta">Tarjeta de Crédito/Débito</mat-option>
-                      <mat-option value="Yape">Yape</mat-option>
-                      <mat-option value="Plin">Plin</mat-option>
-                      <mat-option value="Pago al recoger">Pago en tienda al recoger</mat-option>
+                      <mat-select-trigger>
+                        <div class="payment-option">
+                          @if (checkoutForm.get('metodoPago')?.value === 'Tarjeta') {
+                            <mat-icon class="icon-card">credit_card</mat-icon>
+                          }
+                          @if (checkoutForm.get('metodoPago')?.value === 'Yape') {
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;margin-right:8px;vertical-align:middle;">
+                              <rect width="24" height="24" rx="6" fill="#742284"/>
+                              <path d="M7 8C7 8 9.5 7.5 11 11.5C12.5 7.5 15 8 15 8C15 8 13.5 12 12.5 14C11.2 16.5 10 18 9 18C8 18 7.5 17.5 8.5 15.5C9.5 13.5 11 10.5 11 10.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          }
+                          @if (checkoutForm.get('metodoPago')?.value === 'Plin') {
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;margin-right:8px;vertical-align:middle;">
+                              <rect width="24" height="24" rx="6" fill="#00b0ca"/>
+                              <path d="M8 8H13C15.2 8 16 9.5 16 11C16 12.5 15.2 14 13 14H10V18M10 8V18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                          }
+                          @if (checkoutForm.get('metodoPago')?.value === 'Pago al recoger') {
+                            <mat-icon class="icon-store">store</mat-icon>
+                          }
+                          <span>{{ checkoutForm.get('metodoPago')?.value === 'Tarjeta' ? 'Tarjeta de Crédito/Débito' : (checkoutForm.get('metodoPago')?.value === 'Pago al recoger' ? 'Pago en tienda al recoger' : checkoutForm.get('metodoPago')?.value) }}</span>
+                        </div>
+                      </mat-select-trigger>
+
+                      <mat-option value="Tarjeta">
+                        <div class="payment-option">
+                          <mat-icon class="icon-card">credit_card</mat-icon>
+                          <span>Tarjeta de Crédito/Débito</span>
+                        </div>
+                      </mat-option>
+                      <mat-option value="Yape">
+                        <div class="payment-option">
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;margin-right:8px;vertical-align:middle;">
+                            <rect width="24" height="24" rx="6" fill="#742284"/>
+                            <path d="M7 8C7 8 9.5 7.5 11 11.5C12.5 7.5 15 8 15 8C15 8 13.5 12 12.5 14C11.2 16.5 10 18 9 18C8 18 7.5 17.5 8.5 15.5C9.5 13.5 11 10.5 11 10.5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                          <span>Yape</span>
+                        </div>
+                      </mat-option>
+                      <mat-option value="Plin">
+                        <div class="payment-option">
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;margin-right:8px;vertical-align:middle;">
+                            <rect width="24" height="24" rx="6" fill="#00b0ca"/>
+                            <path d="M8 8H13C15.2 8 16 9.5 16 11C16 12.5 15.2 14 13 14H10V18M10 8V18" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                          <span>Plin</span>
+                        </div>
+                      </mat-option>
+                      <mat-option value="Pago al recoger">
+                        <div class="payment-option">
+                          <mat-icon class="icon-store">store</mat-icon>
+                          <span>Pago en tienda al recoger</span>
+                        </div>
+                      </mat-option>
                     </mat-select>
                   </mat-form-field>
                 </div>
 
-                <!-- Pasarela de Pago Simulada -->
-                <div class="card-details-section" *ngIf="checkoutForm.get('metodoPago')?.value === 'Tarjeta'">
-                  <h4>Información de la Tarjeta</h4>
-                  
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Nombre en la tarjeta</mat-label>
-                    <input matInput formControlName="nombreTitular" placeholder="Ej. Juan Pérez" />
-                    <mat-error *ngIf="checkoutForm.get('nombreTitular')?.hasError('required')">Requerido</mat-error>
-                  </mat-form-field>
-
-                  <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Número de Tarjeta</mat-label>
-                    <input matInput formControlName="numeroTarjeta" placeholder="0000 0000 0000 0000" maxlength="16" />
-                    <mat-error *ngIf="checkoutForm.get('numeroTarjeta')?.hasError('required')">Requerido</mat-error>
-                    <mat-error *ngIf="checkoutForm.get('numeroTarjeta')?.hasError('pattern')">Debe tener 16 dígitos</mat-error>
-                  </mat-form-field>
-
-                  <div class="row-group">
-                    <mat-form-field appearance="outline" class="half-width">
-                      <mat-label>Vencimiento (MM/YY)</mat-label>
-                      <input matInput formControlName="fechaVencimiento" placeholder="12/25" maxlength="5" />
-                      <mat-error *ngIf="checkoutForm.get('fechaVencimiento')?.hasError('required')">Requerido</mat-error>
-                      <mat-error *ngIf="checkoutForm.get('fechaVencimiento')?.hasError('pattern')">Formato inválido</mat-error>
+                @if (checkoutForm.get('metodoPago')?.value === 'Tarjeta') {
+                  <div class="card-details-section">
+                    <h4>Información de la Tarjeta</h4>
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Nombre en la tarjeta</mat-label>
+                      <input matInput formControlName="nombreTitular" placeholder="Ej. Juan Pérez" />
+                      <mat-error>Requerido</mat-error>
                     </mat-form-field>
-
-                    <mat-form-field appearance="outline" class="half-width">
-                      <mat-label>CVV</mat-label>
-                      <input matInput type="password" formControlName="cvv" placeholder="123" maxlength="4" />
-                      <mat-error *ngIf="checkoutForm.get('cvv')?.hasError('required')">Requerido</mat-error>
-                      <mat-error *ngIf="checkoutForm.get('cvv')?.hasError('pattern')">3 o 4 dígitos</mat-error>
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>Número de Tarjeta</mat-label>
+                      <input matInput formControlName="numeroTarjeta" placeholder="0000 0000 0000 0000" maxlength="16" />
+                      <mat-error>Requerido o 16 dígitos</mat-error>
                     </mat-form-field>
+                    <div class="row-group">
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Vencimiento (MM/YY)</mat-label>
+                        <input matInput formControlName="fechaVencimiento" placeholder="12/25" maxlength="5" />
+                        <mat-error>Formato MM/YY</mat-error>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>CVV</mat-label>
+                        <input matInput type="password" formControlName="cvv" placeholder="123" maxlength="4" />
+                        <mat-error>3 o 4 dígitos</mat-error>
+                      </mat-form-field>
+                    </div>
                   </div>
-                </div>
+                }
+
+                @if (checkoutForm.get('metodoPago')?.value === 'Yape') {
+                  <div class="card-details-section">
+                    <h4>Información de Yape</h4>
+                    <div class="row-group">
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Número de Celular</mat-label>
+                        <input matInput formControlName="celularYape" placeholder="Ej. 987654321" maxlength="9" />
+                        <mat-error>9 dígitos, empieza con 9</mat-error>
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="half-width">
+                        <mat-label>Código de Aprobación</mat-label>
+                        <input matInput formControlName="codigoAprobacionYape" placeholder="Ej. 123456" maxlength="6" />
+                        <mat-error>6 dígitos</mat-error>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                }
 
                 <mat-divider style="margin: 20px 0;"></mat-divider>
 
@@ -110,16 +172,12 @@ import { VentaPayload, VentaDetallePayload } from '../../../core/ventas/venta.mo
                       <mat-option value="Factura">Factura</mat-option>
                     </mat-select>
                   </mat-form-field>
-
                   <mat-form-field appearance="outline" class="half-width">
-                    <mat-label>Número de Documento (DNI/RUC)</mat-label>
-                    <input matInput formControlName="numeroComprobante" />
-                    <mat-error *ngIf="checkoutForm.get('numeroComprobante')?.hasError('required')">
-                      Requerido
-                    </mat-error>
-                    <mat-error *ngIf="checkoutForm.get('numeroComprobante')?.hasError('pattern')">
-                      {{ checkoutForm.get('tipoComprobante')?.value === 'Boleta' ? 'Debe tener 8 dígitos' : 'Debe tener 11 dígitos' }}
-                    </mat-error>
+                    <mat-label>{{ checkoutForm.get('tipoComprobante')?.value === 'Boleta' ? 'DNI' : 'RUC' }}</mat-label>
+                    <input matInput formControlName="numeroComprobante"
+                      [maxlength]="checkoutForm.get('tipoComprobante')?.value === 'Boleta' ? 8 : 11"
+                      [placeholder]="checkoutForm.get('tipoComprobante')?.value === 'Boleta' ? 'Ingresa tu DNI (8 dígitos)' : 'Ingresa tu RUC (11 dígitos)'" />
+                    <mat-error>{{ checkoutForm.get('tipoComprobante')?.value === 'Boleta' ? '8 dígitos requeridos' : '11 dígitos requeridos' }}</mat-error>
                   </mat-form-field>
                 </div>
 
@@ -134,24 +192,30 @@ import { VentaPayload, VentaDetallePayload } from '../../../core/ventas/venta.mo
             <mat-card-header>
               <mat-card-title>Resumen de tu pedido</mat-card-title>
             </mat-card-header>
-            
-            <mat-card-content>
-              <div class="cart-items" *ngIf="cartService.cartItems().length; else emptyCart">
-                <div class="cart-item" *ngFor="let item of cartService.cartItems()">
-                  <div class="item-qty">{{ item.quantity }}x</div>
-                  <div class="item-details">
-                    <div class="item-name">{{ item.plato.nombre }}</div>
-                    <div class="item-agregados" *ngIf="item.agregados.length">
-                      <span *ngFor="let a of item.agregados; let last=last">{{ a.nombre }}{{ !last ? ', ' : '' }}</span>
-                    </div>
-                  </div>
-                  <div class="item-price">S/ {{ item.totalPrice | number:'1.2-2' }}</div>
-                </div>
-              </div>
 
-              <ng-template #emptyCart>
+            <mat-card-content>
+              @if (cartService.cartItems().length) {
+                <div class="cart-items">
+                  @for (item of cartService.cartItems(); track item.id) {
+                    <div class="cart-item">
+                      <div class="item-qty">{{ item.quantity }}x</div>
+                      <div class="item-details">
+                        <div class="item-name">{{ item.plato.nombre }}</div>
+                        @if (item.agregados.length) {
+                          <div class="item-agregados">
+                            @for (a of item.agregados; track a.id; let last = $last) {
+                              <span>{{ a.nombre }}{{ !last ? ', ' : '' }}</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                      <div class="item-price">S/ {{ item.totalPrice | number:'1.2-2' }}</div>
+                    </div>
+                  }
+                </div>
+              } @else {
                 <p class="empty-msg">No tienes productos en el carrito.</p>
-              </ng-template>
+              }
 
               <mat-divider></mat-divider>
 
@@ -171,12 +235,14 @@ import { VentaPayload, VentaDetallePayload } from '../../../core/ventas/venta.mo
               </div>
 
               <div class="action-section">
-                <button mat-flat-button color="primary" class="pay-btn" 
-                        [disabled]="cartService.cartItems().length === 0 || isProcessing()" 
+                <button mat-flat-button color="primary" class="pay-btn"
+                        [disabled]="cartService.cartItems().length === 0 || isProcessing()"
                         (click)="procesarPago()">
                   {{ isProcessing() ? 'Procesando...' : 'Confirmar Pedido' }}
                 </button>
-                <p class="error-msg" *ngIf="formError()">{{ formError() }}</p>
+                @if (formError()) {
+                  <p class="error-msg">{{ formError() }}</p>
+                }
               </div>
 
             </mat-card-content>
@@ -187,129 +253,70 @@ import { VentaPayload, VentaDetallePayload } from '../../../core/ventas/venta.mo
     </div>
   `,
   styles: [`
+    :host { font-family: 'Inter', sans-serif; }
     .checkout-container {
-      min-height: calc(100vh - 88px);
-      background: linear-gradient(180deg, #f4f7f9 0%, #f6f4ef 100%);
-      padding: 40px 20px;
-      font-family: 'Source Sans 3', sans-serif;
+      min-height: calc(100vh - 72px);
+      background-color: var(--color-bg, #f7f9fc);
+      padding: var(--space-10, 40px) var(--space-5, 20px);
     }
     .checkout-grid {
       display: grid;
       grid-template-columns: 1.5fr 1fr;
-      gap: 32px;
+      gap: 28px;
       max-width: 1200px;
       margin: 0 auto;
     }
     mat-card-title {
-      font-family: 'Fraunces', serif;
-      color: #1f6f8b;
-      font-size: 1.4rem;
+      font-family: 'Fraunces', serif !important;
+      color: var(--color-primary-dark, #003f5c) !important;
+      font-size: 1.35rem !important;
       margin-bottom: 16px;
     }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    .full-width {
-      width: 100%;
-    }
-    .row-group {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
-    .half-width {
-      flex: 1;
-    }
-    
+    .form-group { margin-bottom: 20px; }
+    .full-width { width: 100%; }
+    .row-group { display: flex; gap: 16px; align-items: flex-start; }
+    .half-width { flex: 1; }
+    .payment-option { display: flex; align-items: center; gap: 4px; }
+    .icon-card { color: var(--color-primary, #005f87); margin-right: 8px; vertical-align: middle; }
+    .icon-store { color: var(--color-secondary, #00897b); margin-right: 8px; vertical-align: middle; }
     .card-details-section {
-      background: #fdfbf8;
-      border: 1px solid rgba(31,111,139,.1);
-      border-radius: 12px;
+      background: var(--color-surface-raised, #f0f6fa);
+      border: 1px solid var(--color-border-light, #e8f1f7);
+      border-radius: var(--radius-md, 12px);
       padding: 20px;
       margin-bottom: 12px;
     }
     .card-details-section h4 {
       margin-top: 0;
-      color: #1f6f8b;
+      color: var(--color-primary-dark, #003f5c);
       font-family: 'Fraunces', serif;
-      font-size: 1.1rem;
-    }
-    
-    .cart-item {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .item-qty {
+      font-size: 1.05rem;
       font-weight: 700;
-      color: #8b5e3c;
     }
-    .item-details {
-      flex: 1;
-    }
-    .item-name {
-      font-weight: 700;
-      color: #333;
-    }
-    .item-agregados {
-      font-size: 0.8rem;
-      color: #666;
-    }
-    .item-price {
-      font-weight: 700;
-      color: #1f6f8b;
-    }
-    .empty-msg {
-      color: #666;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .totals-section {
-      margin-top: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      color: #666;
-    }
+    .cart-item { display: flex; gap: 12px; margin-bottom: 14px; }
+    .item-qty { font-weight: 700; color: var(--color-secondary, #00897b); min-width: 28px; }
+    .item-details { flex: 1; }
+    .item-name { font-weight: 700; color: var(--color-text-high, #0d2633); }
+    .item-agregados { font-size: 0.8rem; color: var(--color-text-medium, #4a6572); }
+    .item-price { font-weight: 700; color: var(--color-primary, #005f87); white-space: nowrap; }
+    .empty-msg { color: var(--color-text-medium, #4a6572); text-align: center; margin-bottom: 20px; }
+    .totals-section { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .total-row { display: flex; justify-content: space-between; color: var(--color-text-medium, #4a6572); font-size: 0.95rem; }
     .final-total {
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: #1f6f8b;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--color-primary, #005f87);
       margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px dashed rgba(31,111,139,.2);
+      padding-top: 10px;
+      border-top: 1px solid var(--color-border, #d0e3ed);
     }
-    .action-section {
-      margin-top: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .pay-btn {
-      width: 100%;
-      padding: 8px;
-      font-size: 1.1rem;
-      border-radius: 24px;
-    }
-    .error-msg {
-      color: #f44336;
-      font-size: 0.9rem;
-      text-align: center;
-      margin: 0;
-    }
+    .action-section { margin-top: 24px; display: flex; flex-direction: column; gap: 8px; }
+    .pay-btn { width: 100%; padding: 8px; font-size: 1rem; font-weight: 600; }
+    .error-msg { color: var(--color-error, #c62828); font-size: 0.9rem; text-align: center; margin: 0; }
 
     @media (max-width: 900px) {
-      .checkout-grid {
-        grid-template-columns: 1fr;
-      }
-      .row-group {
-        flex-direction: column;
-        gap: 0;
-      }
+      .checkout-grid { grid-template-columns: 1fr; }
+      .row-group { flex-direction: column; gap: 0; }
     }
   `]
 })
@@ -337,6 +344,8 @@ export class CheckoutPageComponent implements OnInit {
     fechaVencimiento: [''],
     cvv: [''],
     nombreTitular: [''],
+    celularYape: [''],
+    codigoAprobacionYape: [''],
     tipoComprobante: ['Boleta', [Validators.required]],
     numeroComprobante: ['', [Validators.required]]
   });
@@ -346,15 +355,39 @@ export class CheckoutPageComponent implements OnInit {
     if (!this.sessionService.isAuthenticated()) {
       alert("Debes iniciar sesión para procesar un pago.");
       this.router.navigate(['/login']);
+      return;
     }
+
+    // Cargar perfil del usuario para obtener su DNI y celular
+    this.authService.ensureProfileLoaded().then(profile => {
+      if (profile) {
+        // Si el comprobante actual es Boleta, rellenar el DNI
+        if (profile.dni && this.checkoutForm.get('tipoComprobante')?.value === 'Boleta') {
+          this.checkoutForm.get('numeroComprobante')?.setValue(profile.dni);
+        }
+        // Si la forma de pago es Yape, rellenar el celular
+        if (profile.celular && this.checkoutForm.get('metodoPago')?.value === 'Yape') {
+          this.checkoutForm.get('celularYape')?.setValue(profile.celular);
+        }
+      }
+    }).catch(err => {
+      console.error('Error cargando perfil del usuario en checkout', err);
+    });
 
     // Validación condicional del DNI/RUC
     this.checkoutForm.get('tipoComprobante')?.valueChanges.subscribe(val => {
       const numCtrl = this.checkoutForm.get('numeroComprobante');
       if (val === 'Boleta') {
         numCtrl?.setValidators([Validators.required, Validators.pattern(/^\d{8}$/)]);
+        const profile = this.authService.profile();
+        if (profile?.dni) {
+          numCtrl?.setValue(profile.dni);
+        } else {
+          numCtrl?.setValue('');
+        }
       } else {
         numCtrl?.setValidators([Validators.required, Validators.pattern(/^\d{11}$/)]);
+        numCtrl?.setValue('');
       }
       numCtrl?.updateValueAndValidity();
     });
@@ -370,28 +403,67 @@ export class CheckoutPageComponent implements OnInit {
       dirCtrl?.updateValueAndValidity();
     });
 
-    // Validación condicional para Tarjeta
+    // Validación condicional para Método de Pago
     this.checkoutForm.get('metodoPago')?.valueChanges.subscribe(val => {
       const numTar = this.checkoutForm.get('numeroTarjeta');
       const fVenc = this.checkoutForm.get('fechaVencimiento');
       const cvv = this.checkoutForm.get('cvv');
       const titular = this.checkoutForm.get('nombreTitular');
+      const celYape = this.checkoutForm.get('celularYape');
+      const codYape = this.checkoutForm.get('codigoAprobacionYape');
 
       if (val === 'Tarjeta') {
         numTar?.setValidators([Validators.required, Validators.pattern(/^\d{16}$/)]);
         fVenc?.setValidators([Validators.required, Validators.pattern(/^(0[1-9]|1[0-2])\/\d{2}$/)]);
         cvv?.setValidators([Validators.required, Validators.pattern(/^\d{3,4}$/)]);
         titular?.setValidators([Validators.required]);
+        
+        celYape?.clearValidators();
+        codYape?.clearValidators();
+        celYape?.setValue('');
+        codYape?.setValue('');
+      } else if (val === 'Yape') {
+        numTar?.clearValidators();
+        fVenc?.clearValidators();
+        cvv?.clearValidators();
+        titular?.clearValidators();
+        numTar?.setValue('');
+        fVenc?.setValue('');
+        cvv?.setValue('');
+        titular?.setValue('');
+
+        celYape?.setValidators([Validators.required, Validators.pattern(/^9\d{8}$/)]);
+        codYape?.setValidators([Validators.required, Validators.pattern(/^\d{6}$/)]);
+
+        const profile = this.authService.profile();
+        if (profile?.celular) {
+          celYape?.setValue(profile.celular);
+        } else {
+          celYape?.setValue('');
+        }
+        codYape?.setValue('');
       } else {
         numTar?.clearValidators();
         fVenc?.clearValidators();
         cvv?.clearValidators();
         titular?.clearValidators();
+        numTar?.setValue('');
+        fVenc?.setValue('');
+        cvv?.setValue('');
+        titular?.setValue('');
+
+        celYape?.clearValidators();
+        codYape?.clearValidators();
+        celYape?.setValue('');
+        codYape?.setValue('');
       }
+      
       numTar?.updateValueAndValidity();
       fVenc?.updateValueAndValidity();
       cvv?.updateValueAndValidity();
       titular?.updateValueAndValidity();
+      celYape?.updateValueAndValidity();
+      codYape?.updateValueAndValidity();
     });
 
     // Inicializar validadores condicionales
@@ -476,6 +548,12 @@ export class CheckoutPageComponent implements OnInit {
 
       const formVals = this.checkoutForm.value;
 
+      // Simular pago si es Yape
+      if (formVals.metodoPago === 'Yape') {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        alert("¡Yapeo exitoso!");
+      }
+
       // 1. Generar ID transaccional (B001-... o F001-...)
       const prefix = formVals.tipoComprobante === 'Factura' ? 'F001' : 'B001';
       const timestamp = Math.floor(Date.now() / 1000).toString().substring(4);
@@ -507,12 +585,29 @@ export class CheckoutPageComponent implements OnInit {
       };
 
       // 6. Enviar a Backend
-      await this.ventasService.crearVenta(payload).toPromise();
+      const response: any = await this.ventasService.crearVenta(payload).toPromise();
+      const ventaId = response?.id || transactionId;
 
-      // 7. Exito
+      // 7. Guardar en pedidos recientes
+      try {
+        const stored = localStorage.getItem('lasolas_recent_orders');
+        const currentList = stored ? JSON.parse(stored) : [];
+        currentList.unshift({
+          id: ventaId,
+          fecha: new Date().toISOString(),
+          total: this.cartService.cartTotal(),
+          tipoComprobante: formVals.tipoComprobante,
+          numeroComprobante: formVals.numeroComprobante
+        });
+        localStorage.setItem('lasolas_recent_orders', JSON.stringify(currentList.slice(0, 10)));
+      } catch (e) {
+        console.error("Error guardando pedido localmente", e);
+      }
+
+      // 8. Exito
       this.cartService.clearCart();
-      alert(`¡Tu pedido ha sido procesado con éxito!\\nComprobante generado: ${transactionId}`);
-      this.router.navigate(['/']);
+      alert(`¡Tu pedido ha sido procesado con éxito!\nComprobante generado: ${transactionId}`);
+      this.router.navigate(['/seguimiento', ventaId]);
 
     } catch (error: any) {
       console.error(error);

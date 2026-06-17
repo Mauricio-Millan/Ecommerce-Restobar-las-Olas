@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.backendrestobarlasolas.dto.venta.DetalleVentaAgregadoDto;
 import org.example.backendrestobarlasolas.dto.venta.DetalleVentaDto;
 import org.example.backendrestobarlasolas.dto.venta.VentaResponseDto;
+import org.example.backendrestobarlasolas.dto.venta.PlatoMasVendidoDto;
 import org.example.backendrestobarlasolas.model.Agregado;
 import org.example.backendrestobarlasolas.model.DetalleVenta;
 import org.example.backendrestobarlasolas.model.DetalleVentaAgregado;
@@ -14,6 +15,7 @@ import org.example.backendrestobarlasolas.repository.PlatoRepository;
 import org.example.backendrestobarlasolas.repository.VentaRepository;
 import org.example.backendrestobarlasolas.service.AbstractJpaCrudService;
 import org.example.backendrestobarlasolas.service.VentaService;
+import org.example.backendrestobarlasolas.service.VentaSseEmitterService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +29,15 @@ public class VentaServiceImpl extends AbstractJpaCrudService<Venta, Integer> imp
 
     private final PlatoRepository platoRepository;
     private final AgregadoRepository agregadoRepository;
+    private final VentaSseEmitterService sseEmitterService;
+    private final org.example.backendrestobarlasolas.repository.DetalleVentaRepository detalleVentaRepository;
 
-    public VentaServiceImpl(VentaRepository repository, PlatoRepository platoRepository, AgregadoRepository agregadoRepository) {
+    public VentaServiceImpl(VentaRepository repository, PlatoRepository platoRepository, AgregadoRepository agregadoRepository, VentaSseEmitterService sseEmitterService, org.example.backendrestobarlasolas.repository.DetalleVentaRepository detalleVentaRepository) {
         super(repository);
         this.platoRepository = platoRepository;
         this.agregadoRepository = agregadoRepository;
+        this.sseEmitterService = sseEmitterService;
+        this.detalleVentaRepository = detalleVentaRepository;
     }
 
     @Override
@@ -48,6 +54,13 @@ public class VentaServiceImpl extends AbstractJpaCrudService<Venta, Integer> imp
             for (DetalleVenta d : saved.getDetalles()) {
                 log.info("[VENTA SAVE]   Detalle id={}, estadoItem={}", d.getId(), d.getEstadoItem() != null ? d.getEstadoItem().getDbValue() : null);
             }
+        }
+        // Publicamos la actualización para clientes conectados al SSE (kanban en tiempo real)
+        try {
+            VentaResponseDto dto = mapVentaToDto(saved);
+            sseEmitterService.publishVentaUpdate(dto);
+        } catch (Exception e) {
+            log.debug("No se pudo publicar evento SSE tras guardar venta: {}", e.getMessage());
         }
         return saved;
     }
@@ -156,6 +169,13 @@ public class VentaServiceImpl extends AbstractJpaCrudService<Venta, Integer> imp
                 usuarioId,
                 java.util.List.of(org.example.backendrestobarlasolas.model.VentaEstado.ENTREGADO, org.example.backendrestobarlasolas.model.VentaEstado.CANCELADO)
         );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public java.util.List<VentaResponseDto> getVentasPorUsuario(java.util.UUID usuarioId) {
+        List<Venta> ventas = ((VentaRepository) repository).findAllByUsuarioIdWithDetallesOrderByFechaVentaDesc(usuarioId);
+        return ventas.stream().map(this::mapVentaToDto).toList();
     }
 
     @Override
@@ -308,7 +328,162 @@ public class VentaServiceImpl extends AbstractJpaCrudService<Venta, Integer> imp
     public Venta actualizarEstadoVenta(Integer id, org.example.backendrestobarlasolas.model.VentaEstado nuevoEstado) {
         return repository.findById(id).map(venta -> {
             venta.setEstadoVenta(nuevoEstado);
-            return repository.save(venta);
+            Venta actualizada = repository.save(venta);
+            // Notificamos por SSE el cambio de estado
+            try {
+                VentaResponseDto dto = mapVentaToDto(actualizada);
+                sseEmitterService.publishVentaUpdate(dto);
+            } catch (Exception e) {
+                log.debug("No se pudo publicar evento SSE tras actualizar estado: {}", e.getMessage());
+            }
+            return actualizada;
         }).orElseThrow(() -> new RuntimeException("Venta no encontrada con ID: " + id));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PlatoMasVendidoDto> getPlatosMasVendidos(int limit) {
+        List<Object[]> raw = detalleVentaRepository.findPlatosMasVendidosRaw();
+        return raw.stream()
+                .limit(limit > 0 ? limit : Long.MAX_VALUE)
+                .map(row -> new PlatoMasVendidoDto(
+                        (Integer) row[0],
+                        (String) row[1],
+                        (Long) row[2],
+                        row[3] != null ? new BigDecimal(row[3].toString()) : BigDecimal.ZERO
+                ))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportVentasCsv(java.time.LocalDate fecha) {
+        List<Venta> ventas = getVentasPorFecha(fecha);
+        StringBuilder sb = new StringBuilder();
+        // UTF-8 BOM to ensure Excel opens it correctly with accents
+        sb.append("\uFEFF");
+        sb.append("ID Venta,Cliente,Fecha,Total,Metodo Pago,Tipo Comprobante,Numero Comprobante,Delivery,Direccion,Estado\n");
+
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        for (Venta v : ventas) {
+            String cliente = v.getUsuario() != null ? v.getUsuario().getNombre() + " " + v.getUsuario().getApellido() : "Anónimo";
+            String fechaStr = v.getFechaVenta() != null ? v.getFechaVenta().format(formatter) : "";
+            sb.append(v.getId()).append(",")
+              .append("\"").append(cliente.replace("\"", "\"\"")).append("\",")
+              .append(fechaStr).append(",")
+              .append(v.getTotal()).append(",")
+              .append(v.getMetodoPago() != null ? v.getMetodoPago() : "").append(",")
+              .append(v.getTipoComprobante() != null ? v.getTipoComprobante() : "").append(",")
+              .append(v.getNumeroComprobante() != null ? v.getNumeroComprobante() : "").append(",")
+              .append(v.getEsDelivery() != null && v.getEsDelivery() ? "Sí" : "No").append(",")
+              .append("\"").append((v.getDireccionEntrega() != null ? v.getDireccionEntrega() : "").replace("\"", "\"\"")).append("\",")
+              .append(v.getEstadoVenta() != null ? v.getEstadoVenta().getDbValue() : "").append("\n");
+        }
+        return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportVentasExcel(java.time.LocalDate fecha) {
+        List<Venta> ventas = getVentasPorFecha(fecha);
+        try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
+             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            
+            org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Reporte Ventas");
+
+            // Cabeceras y estilos
+            org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
+
+            org.apache.poi.ss.usermodel.CellStyle headerCellStyle = workbook.createCellStyle();
+            headerCellStyle.setFont(headerFont);
+            headerCellStyle.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.DARK_BLUE.getIndex());
+            headerCellStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+            headerCellStyle.setAlignment(org.apache.poi.ss.usermodel.HorizontalAlignment.CENTER);
+
+            // Crear fila de cabecera
+            org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+            String[] headers = {
+                    "ID Venta", "Cliente", "Fecha", "Total", "Método Pago", 
+                    "Tipo Comprobante", "Número Comprobante", "Delivery", "Dirección", "Estado"
+            };
+
+            for (int col = 0; col < headers.length; col++) {
+                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(col);
+                cell.setCellValue(headers[col]);
+                cell.setCellStyle(headerCellStyle);
+            }
+
+            // Formato para celdas
+            org.apache.poi.ss.usermodel.CellStyle dateCellStyle = workbook.createCellStyle();
+            dateCellStyle.setDataFormat(workbook.getCreationHelper().createDataFormat().getFormat("yyyy-mm-dd hh:mm:ss"));
+
+            org.apache.poi.ss.usermodel.CellStyle doubleCellStyle = workbook.createCellStyle();
+            doubleCellStyle.setDataFormat(workbook.getCreationHelper().createDataFormat().getFormat("0.00"));
+
+            int rowIdx = 1;
+            for (Venta v : ventas) {
+                org.apache.poi.ss.usermodel.Row row = sheet.createRow(rowIdx++);
+
+                // ID
+                row.createCell(0).setCellValue(v.getId());
+
+                // Cliente
+                String cliente = v.getUsuario() != null ? v.getUsuario().getNombre() + " " + v.getUsuario().getApellido() : "Anónimo";
+                row.createCell(1).setCellValue(cliente);
+
+                // Fecha
+                org.apache.poi.ss.usermodel.Cell dateCell = row.createCell(2);
+                if (v.getFechaVenta() != null) {
+                    dateCell.setCellValue(java.util.Date.from(v.getFechaVenta().toInstant()));
+                    dateCell.setCellStyle(dateCellStyle);
+                }
+
+                // Total
+                org.apache.poi.ss.usermodel.Cell totalCell = row.createCell(3);
+                totalCell.setCellValue(v.getTotal() != null ? v.getTotal().doubleValue() : 0.0);
+                totalCell.setCellStyle(doubleCellStyle);
+
+                // Metodo Pago
+                row.createCell(4).setCellValue(v.getMetodoPago() != null ? v.getMetodoPago() : "");
+
+                // Tipo Comprobante
+                row.createCell(5).setCellValue(v.getTipoComprobante() != null ? v.getTipoComprobante() : "");
+
+                // Numero Comprobante
+                row.createCell(6).setCellValue(v.getNumeroComprobante() != null ? v.getNumeroComprobante() : "");
+
+                // Delivery
+                row.createCell(7).setCellValue(v.getEsDelivery() != null && v.getEsDelivery() ? "Sí" : "No");
+
+                // Direccion
+                row.createCell(8).setCellValue(v.getDireccionEntrega() != null ? v.getDireccionEntrega() : "");
+
+                // Estado
+                row.createCell(9).setCellValue(v.getEstadoVenta() != null ? v.getEstadoVenta().getDbValue() : "");
+            }
+
+            // Auto-ajustar tamaño de columnas
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            log.error("Error al exportar ventas a Excel", e);
+            throw new RuntimeException("Error al generar archivo Excel", e);
+        }
+    }
+
+    private List<Venta> getVentasPorFecha(java.time.LocalDate fecha) {
+        if (fecha == null) {
+            return repository.findAll();
+        }
+        java.time.OffsetDateTime start = fecha.atStartOfDay(java.time.ZoneId.systemDefault()).toOffsetDateTime();
+        java.time.OffsetDateTime end = fecha.plusDays(1).atStartOfDay(java.time.ZoneId.systemDefault()).toOffsetDateTime();
+        return ((VentaRepository) repository).findVentasByFecha(start, end);
     }
 }

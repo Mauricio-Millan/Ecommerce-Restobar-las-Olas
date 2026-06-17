@@ -26,6 +26,10 @@ const adminRoutes: Routes = [
       {
         path: 'usuarios',
         loadComponent: () => import('./features/admin/pages/usuarios-admin.component').then((m) => m.UsuariosAdminComponent)
+      },
+      {
+        path: 'ventas',
+        loadComponent: () => import('./features/admin/pages/ventas-reporte.component').then((m) => m.VentasReporteComponent)
       }
     ]
   }
@@ -60,6 +64,14 @@ export const routes: Routes = [
       {
         path: 'checkout',
         loadComponent: () => import('./features/checkout/pages/checkout-page.component').then((m) => m.CheckoutPageComponent)
+      },
+      {
+        path: 'seguimiento',
+        loadComponent: () => import('./features/checkout/pages/order-tracking-page.component').then((m) => m.OrderTrackingPageComponent)
+      },
+      {
+        path: 'seguimiento/:id',
+        loadComponent: () => import('./features/checkout/pages/order-tracking-page.component').then((m) => m.OrderTrackingPageComponent)
       }
     ]
   },

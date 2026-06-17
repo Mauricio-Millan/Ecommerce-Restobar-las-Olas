@@ -4,6 +4,11 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   selector: 'app-footer',
   standalone: true,
   template: `
+    <div class="wave-divider" aria-hidden="true">
+      <svg viewBox="0 0 1440 40" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+        <path d="M0,20 C360,40 1080,0 1440,20 L1440,40 L0,40 Z" fill="#003f5c"/>
+      </svg>
+    </div>
     <footer class="footer">
       <div class="footer-content">
         <p>&copy; 2026 Restobar Las Olas. Todos los derechos reservados.</p>
@@ -12,13 +17,22 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     </footer>
   `,
   styles: [`
+    .wave-divider {
+      display: block;
+      line-height: 0;
+      margin-bottom: -2px;
+    }
+    .wave-divider svg {
+      display: block;
+      width: 100%;
+      height: 40px;
+    }
     .footer {
-      background: linear-gradient(120deg, #0e2a36, #1f6f8b);
-      color: #f6f4ef;
-      padding: 24px 20px;
+      background: var(--color-primary-dark, #003f5c);
+      color: #e8f4f9;
+      padding: 28px 20px 24px;
       text-align: center;
-      box-shadow: 0 -4px 20px rgba(12, 22, 24, 0.1);
-      font-family: 'Source Sans 3', sans-serif;
+      font-family: 'Inter', sans-serif;
     }
     .footer-content {
       max-width: 1200px;
@@ -30,7 +44,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     }
     .footer-subtitle {
       font-size: 0.85rem;
-      opacity: 0.8;
+      color: var(--sidebar-text, #a8c4d5);
       margin-top: 8px !important;
     }
   `],

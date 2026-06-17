@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,7 +16,7 @@ import { Plato } from '../../../core/catalog/plato.model';
 @Component({
   selector: 'agregados-admin',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatListModule, MatIconModule],
+  imports: [DecimalPipe, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatListModule, MatIconModule],
   template: `
     <div class="admin-grid">
       <section class="panel form-panel">
@@ -53,23 +53,22 @@ import { Plato } from '../../../core/catalog/plato.model';
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Elegir agregado</mat-label>
             <mat-select (selectionChange)="onEditingAgregadoSelected($event.value)">
-              <mat-option *ngIf="!agregados().length" [disabled]="true">Sin agregados disponibles</mat-option>
-              <mat-option *ngFor="let a of agregados()" [value]="a.id">{{ a.nombre }}</mat-option>
+              @if (!agregados().length) { <mat-option [disabled]="true">Sin agregados disponibles</mat-option> }
+              @for (a of agregados(); track a.id) { <mat-option [value]="a.id">{{ a.nombre }}</mat-option> }
             </mat-select>
           </mat-form-field>
-
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Elegir plato</mat-label>
             <mat-select (selectionChange)="onSelectedPlatoSelected($event.value)">
-              <mat-option *ngIf="!platos().length" [disabled]="true">Sin platos disponibles</mat-option>
-              <mat-option *ngFor="let p of platos()" [value]="p.id">{{ p.nombre }}</mat-option>
+              @if (!platos().length) { <mat-option [disabled]="true">Sin platos disponibles</mat-option> }
+              @for (p of platos(); track p.id) { <mat-option [value]="p.id">{{ p.nombre }}</mat-option> }
             </mat-select>
           </mat-form-field>
         </div>
         <div class="actions">
           <button mat-flat-button color="primary" type="button" [disabled]="!canLink()" (click)="linkAgregadoToPlato()">Vincular agregado al plato</button>
         </div>
-        <p class="state" *ngIf="linkMessage()">{{ linkMessage() }}</p>
+        @if (linkMessage()) { <p class="state">{{ linkMessage() }}</p> }
       </section>
 
       <section class="panel list-panel full">
@@ -80,52 +79,56 @@ import { Plato } from '../../../core/catalog/plato.model';
           </div>
           <button mat-stroked-button type="button" (click)="loadAgregados()">Recargar</button>
         </div>
-        <p class="state" *ngIf="loadingAgregados()">Cargando agregados...</p>
-        <p class="state error" *ngIf="errorAgregados()">{{ errorAgregados() }}</p>
-        <p class="state empty" *ngIf="!loadingAgregados() && !agregados().length">No hay agregados registrados.</p>
-        <div class="list" role="list" *ngIf="agregados().length">
-          <div class="list-item" role="listitem" *ngFor="let agregado of agregados()">
-            <div class="item-body">
-              <div class="item-title">{{ agregado.nombre }}</div>
-              <div class="item-sub">Agregado de carta</div>
-            </div>
-            <div class="item-meta">
-              <span class="price">S/ {{ agregado.precio | number:'1.2-2' }}</span>
-            </div>
-            <div class="item-actions">
-              <button mat-icon-button color="primary" (click)="editAgregado(agregado)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="deleteAgregado(agregado)">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
+        @if (loadingAgregados()) { <p class="state">Cargando agregados...</p> }
+        @if (errorAgregados()) { <p class="state error">{{ errorAgregados() }}</p> }
+        @if (!loadingAgregados() && !agregados().length) { <p class="state empty">No hay agregados registrados.</p> }
+        @if (agregados().length) {
+          <div class="list" role="list">
+            @for (agregado of agregados(); track agregado.id) {
+              <div class="list-item" role="listitem">
+                <div class="item-body">
+                  <div class="item-title">{{ agregado.nombre }}</div>
+                  <div class="item-sub">Agregado de carta</div>
+                </div>
+                <div class="item-meta">
+                  <span class="price">S/ {{ agregado.precio | number:'1.2-2' }}</span>
+                </div>
+                <div class="item-actions">
+                  <button mat-icon-button color="primary" (click)="editAgregado(agregado)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteAgregado(agregado)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
           </div>
-        </div>
+        }
       </section>
     </div>
   `,
   styles: [`
-    :host { font-family: 'Source Sans 3', sans-serif; color: #1d2b2a; }
-    h3 { font-family: 'Fraunces', serif; margin: 0; font-size: 1.25rem; }
-    .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.68rem; color: rgba(29, 43, 42, 0.6); margin: 0 0 4px; }
+    :host { font-family: 'Inter', sans-serif; color: var(--color-text-high, #0d2633); }
+    h3 { font-family: 'Fraunces', serif; margin: 0; font-size: 1.25rem; color: var(--color-primary-dark, #003f5c); }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.68rem; color: var(--color-secondary, #00897b); margin: 0 0 4px; font-weight: 600; }
     .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .panel { background: #ffffff; border-radius: 18px; border: 1px solid rgba(31, 111, 139, 0.12); padding: 18px; box-shadow: 0 18px 40px rgba(18, 35, 32, 0.08); }
+    .panel { background: var(--color-surface, #fff); border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-light, #e8f1f7); padding: 18px; box-shadow: var(--shadow-md); }
     .panel.full { grid-column: 1 / -1; }
     .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
     .form-body { display: grid; gap: 12px; }
     .link-grid { display: grid; gap: 12px; }
     .full-width { width: 100%; }
     .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 6px; }
-    .state { margin: 8px 0; font-size: 0.9rem; }
-    .state.error { color: #b42318; }
-    .state.empty { color: rgba(29, 43, 42, 0.7); }
-    .list { display: grid; gap: 12px; }
-    .list-item { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: linear-gradient(120deg, rgba(246, 244, 239, 0.9), #ffffff); border: 1px solid rgba(31, 111, 139, 0.12); }
-    .item-title { font-weight: 700; }
-    .item-sub { font-size: 0.86rem; color: rgba(29, 43, 42, 0.7); }
+    .state { margin: 8px 0; font-size: 0.9rem; color: var(--color-text-medium, #4a6572); }
+    .state.error { color: var(--color-error, #c62828); }
+    .state.empty { color: var(--color-text-low, #7a9aaa); }
+    .list { display: grid; gap: 10px; }
+    .list-item { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius-md, 12px); background: var(--color-surface-raised, #f0f6fa); border: 1px solid var(--color-border-light, #e8f1f7); }
+    .item-title { font-weight: 700; color: var(--color-text-high, #0d2633); }
+    .item-sub { font-size: 0.86rem; color: var(--color-text-medium, #4a6572); }
     .item-meta { display: grid; justify-items: end; gap: 6px; }
-    .price { font-weight: 700; color: #1f6f8b; }
+    .price { font-weight: 700; color: var(--color-primary, #005f87); }
     .item-actions { display: flex; gap: 4px; }
 
     @media (max-width: 980px) {

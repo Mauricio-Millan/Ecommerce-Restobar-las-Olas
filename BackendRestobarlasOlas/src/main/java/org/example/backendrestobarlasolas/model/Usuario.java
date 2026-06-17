@@ -58,6 +58,9 @@ public class Usuario {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    @Column(name ="activo")
+    private Boolean activo;
+
     @JsonIgnore
     @OneToMany(mappedBy = "usuario", fetch = FetchType.LAZY)
     @Builder.Default
@@ -67,6 +70,9 @@ public class Usuario {
     void prePersist() {
         if (createdAt == null) {
             createdAt = OffsetDateTime.now();
+        }
+        if (activo == null) {
+            activo = Boolean.TRUE;
         }
     }
 }

@@ -1,13 +1,15 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { VentasService } from '../../../core/ventas/ventas.service';
+import { VentasSseService } from '../../../core/ventas/ventas-sse.service';
 import { VentaResponse } from '../../../core/ventas/venta.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-kitchen-board',
   standalone: true,
-  imports: [CommonModule, DragDropModule],
+  imports: [DatePipe, DragDropModule],
   template: `
     <div class="board-container">
       <header class="board-header">
@@ -22,110 +24,109 @@ import { VentaResponse } from '../../../core/ventas/venta.model';
 
       <div class="board">
         <!-- Columna: Nuevos -->
-        <div class="column">
+        <div class="column col-nuevos">
           <h3 class="column-title nuevos">Nuevos</h3>
-          <div
-            cdkDropList
-            #nuevosList="cdkDropList"
-            id="Nuevos"
-            [cdkDropListData]="nuevos"
-            [cdkDropListConnectedTo]="[preparacionList, listosList]"
-            class="card-list"
-            (cdkDropListDropped)="drop($event)">
-            
-            <div class="card" *ngFor="let item of nuevos" cdkDrag>
-              <div class="card-header">
-                <span class="order-id">#{{ item.id }}</span>
-                <span class="time">{{ item.fechaCreacion | date:'shortTime' }}</span>
+          <div cdkDropList #nuevosList="cdkDropList" id="Nuevos"
+               [cdkDropListData]="nuevos"
+               [cdkDropListConnectedTo]="[preparacionList, listosList]"
+               class="card-list" (cdkDropListDropped)="drop($event)">
+            @for (item of nuevos; track item.id) {
+              <div class="card" cdkDrag>
+                <div class="card-header">
+                  <span class="order-id">#{{ item.id }}</span>
+                  <span class="time">{{ item.fechaCreacion | date:'shortTime' }}</span>
+                </div>
+                <div class="card-body">
+                  <ul>
+                    @for (det of item.detalles; track $index) {
+                      <li>
+                        <strong>{{ det.cantidad }}x</strong> {{ getPlatoNombre(det) }}
+                        @if (getAgregados(det).length) {
+                          <div class="agregados">
+                            + @for (a of getAgregados(det); track a; let last = $last) {<span>{{ a }}{{ last ? '' : ', ' }}</span>}
+                          </div>
+                        }
+                      </li>
+                    }
+                  </ul>
+                </div>
               </div>
-              <div class="card-body">
-                <ul>
-                  <li *ngFor="let det of item.detalles">
-                    <strong>{{ det.cantidad }}x</strong> {{ getPlatoNombre(det) }}
-                    <div class="agregados" *ngIf="getAgregados(det).length">
-                      + <span *ngFor="let a of getAgregados(det); let last=last">{{ a }}{{ last ? '' : ', ' }}</span>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div class="empty-msg" *ngIf="!nuevos.length">Sin pedidos</div>
+            }
+            @if (!nuevos.length) { <div class="empty-msg">Sin pedidos nuevos</div> }
           </div>
         </div>
 
         <!-- Columna: En Preparación -->
-        <div class="column">
+        <div class="column col-preparacion">
           <h3 class="column-title preparacion">En Preparación</h3>
-            <div
-            cdkDropList
-            #preparacionList="cdkDropList"
-            id="En Preparacion"
-            [cdkDropListData]="enPreparacion"
-            [cdkDropListConnectedTo]="[nuevosList, listosList]"
-            class="card-list"
-            (cdkDropListDropped)="drop($event)">
-            
-            <div class="card" *ngFor="let item of enPreparacion" cdkDrag>
-              <div class="card-header">
-                <span class="order-id">#{{ item.id }}</span>
-                <span class="time">{{ item.fechaCreacion | date:'shortTime' }}</span>
+          <div cdkDropList #preparacionList="cdkDropList" id="En Preparacion"
+               [cdkDropListData]="enPreparacion"
+               [cdkDropListConnectedTo]="[nuevosList, listosList]"
+               class="card-list" (cdkDropListDropped)="drop($event)">
+            @for (item of enPreparacion; track item.id) {
+              <div class="card" cdkDrag>
+                <div class="card-header">
+                  <span class="order-id">#{{ item.id }}</span>
+                  <span class="time">{{ item.fechaCreacion | date:'shortTime' }}</span>
+                </div>
+                <div class="card-body">
+                  <ul>
+                    @for (det of item.detalles; track $index) {
+                      <li>
+                        <strong>{{ det.cantidad }}x</strong> {{ getPlatoNombre(det) }}
+                        @if (getAgregados(det).length) {
+                          <div class="agregados">
+                            + @for (a of getAgregados(det); track a; let last = $last) {<span>{{ a }}{{ last ? '' : ', ' }}</span>}
+                          </div>
+                        }
+                      </li>
+                    }
+                  </ul>
+                </div>
               </div>
-              <div class="card-body">
-                <ul>
-                  <li *ngFor="let det of item.detalles">
-                    <strong>{{ det.cantidad }}x</strong> {{ getPlatoNombre(det) }}
-                    <div class="agregados" *ngIf="getAgregados(det).length">
-                      + <span *ngFor="let a of getAgregados(det); let last=last">{{ a }}{{ last ? '' : ', ' }}</span>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div class="empty-msg" *ngIf="!enPreparacion.length">Sin pedidos</div>
+            }
+            @if (!enPreparacion.length) { <div class="empty-msg">Sin pedidos en cocina</div> }
           </div>
         </div>
 
         <!-- Columna: Listos -->
-        <div class="column">
+        <div class="column col-listos">
           <h3 class="column-title listos">Listos</h3>
-            <div
-            cdkDropList
-            #listosList="cdkDropList"
-            id="Listos"
-            [cdkDropListData]="listos"
-            [cdkDropListConnectedTo]="[nuevosList, preparacionList]"
-            class="card-list"
-            (cdkDropListDropped)="drop($event)">
-            
-            <div class="card" *ngFor="let item of listos" cdkDrag>
-              <div class="card-header">
-                <span class="order-id">#{{ item.id }}</span>
-                <span class="time">{{ item.fechaCreacion | date:'shortTime' }}</span>
+          <div cdkDropList #listosList="cdkDropList" id="Listos"
+               [cdkDropListData]="listos"
+               [cdkDropListConnectedTo]="[nuevosList, preparacionList]"
+               class="card-list" (cdkDropListDropped)="drop($event)">
+            @for (item of listos; track item.id) {
+              <div class="card" cdkDrag>
+                <div class="card-header">
+                  <span class="order-id">#{{ item.id }}</span>
+                  <span class="time">{{ item.fechaCreacion | date:'shortTime' }}</span>
+                </div>
+                <div class="card-body">
+                  <ul>
+                    @for (det of item.detalles; track $index) {
+                      <li><strong>{{ det.cantidad }}x</strong> {{ getPlatoNombre(det) }}</li>
+                    }
+                  </ul>
+                </div>
+                <div class="card-actions">
+                  <button class="action-btn deliver" (click)="marcarEntregado(item)" [disabled]="pendingActions.has(item.id)">Entregado</button>
+                  <button class="action-btn cancel" (click)="marcarCancelado(item)" [disabled]="pendingActions.has(item.id)">Cancelar</button>
+                </div>
               </div>
-              <div class="card-body">
-                <ul>
-                  <li *ngFor="let det of item.detalles">
-                    <strong>{{ det.cantidad }}x</strong> {{ getPlatoNombre(det) }}
-                  </li>
-                </ul>
-              </div>
-              <div class="card-actions">
-                <button class="action-btn deliver" (click)="marcarEntregado(item)" [disabled]="pendingActions.has(item.id)">Entregado</button>
-                <button class="action-btn cancel" (click)="marcarCancelado(item)" [disabled]="pendingActions.has(item.id)">Cancelar</button>
-              </div>
-            </div>
-            <div class="empty-msg" *ngIf="!listos.length">Sin pedidos</div>
+            }
+            @if (!listos.length) { <div class="empty-msg">Sin pedidos listos</div> }
           </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
+    :host { font-family: 'Inter', sans-serif; }
     .board-container {
-      padding: 24px;
-      height: calc(100vh - 64px);
-      background-color: #f4f7f9;
-      font-family: 'Source Sans 3', sans-serif;
+      padding: 20px 24px;
+      height: calc(100vh - 72px);
+      background-color: var(--color-bg, #f7f9fc);
       display: flex;
       flex-direction: column;
     }
@@ -133,134 +134,121 @@ import { VentaResponse } from '../../../core/ventas/venta.model';
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .board-header h2 {
       margin: 0;
-      color: #1d2b2a;
+      color: var(--color-primary-dark, #003f5c);
       font-family: 'Fraunces', serif;
+      font-size: 1.5rem;
     }
-    .board-header p {
-      margin: 4px 0 0;
-      color: #666;
-      font-size: 0.9rem;
-    }
+    .board-header p { margin: 4px 0 0; color: var(--color-text-medium, #4a6572); font-size: 0.9rem; }
     .refresh-btn {
       padding: 8px 16px;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      background: var(--color-surface, #fff);
+      border: 1px solid var(--color-border, #d0e3ed);
+      border-radius: var(--radius-md, 12px);
       cursor: pointer;
       font-weight: 600;
-      color: #1f6f8b;
+      color: var(--color-primary, #005f87);
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: background 0.2s;
+      font-family: 'Inter', sans-serif;
+      transition: background var(--transition-fast), box-shadow var(--transition-fast);
     }
-    .refresh-btn:hover { background: #f0f0f0; }
-    
-    .board {
-      display: flex;
-      gap: 24px;
-      flex: 1;
-      overflow-x: auto;
-    }
+    .refresh-btn:hover { background: var(--color-surface-raised, #f0f6fa); box-shadow: var(--shadow-sm); }
+
+    .board { display: flex; gap: 20px; flex: 1; overflow-x: auto; overflow-y: hidden; }
     .column {
       flex: 1;
-      min-width: 300px;
-      background: #e2e8f0;
-      border-radius: 12px;
+      min-width: 260px;
+      background: var(--color-surface-raised, #f0f6fa);
+      border-radius: var(--radius-md, 12px);
+      border: 1px solid var(--color-border-light, #e8f1f7);
       display: flex;
       flex-direction: column;
       max-height: 100%;
     }
-    .column-title {
-      padding: 16px;
-      margin: 0;
-      font-size: 1.1rem;
-      font-weight: 700;
-      border-bottom: 2px solid transparent;
-    }
-    .column-title.nuevos { color: #b42318; border-color: #b42318; }
-    .column-title.preparacion { color: #d97706; border-color: #d97706; }
-    .column-title.listos { color: #059669; border-color: #059669; }
+    .col-nuevos { border-top: 3px solid var(--color-warning, #c97a10); }
+    .col-preparacion { border-top: 3px solid var(--color-info, #0277bd); }
+    .col-listos { border-top: 3px solid var(--color-success, #1a7f5c); }
 
-    .card-list {
-      padding: 12px;
-      flex: 1;
-      overflow-y: auto;
-      min-height: 200px;
-    }
+    .column-title { padding: 14px 16px; margin: 0; font-size: 1rem; font-weight: 700; border-bottom: 1px solid var(--color-border-light, #e8f1f7); }
+    .column-title.nuevos { color: var(--color-warning, #c97a10); }
+    .column-title.preparacion { color: var(--color-info, #0277bd); }
+    .column-title.listos { color: var(--color-success, #1a7f5c); }
+
+    .card-list { padding: 10px; flex: 1; overflow-y: auto; min-height: 160px; }
     .card {
-      background: white;
-      border-radius: 8px;
+      background: var(--color-surface, #fff);
+      border-radius: var(--radius-sm, 6px);
       padding: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
       cursor: grab;
-      border-left: 4px solid #1f6f8b;
+      border-left: 4px solid var(--color-primary, #005f87);
     }
     .card:active { cursor: grabbing; }
     .cdk-drag-preview {
       box-sizing: border-box;
-      border-radius: 8px;
-      box-shadow: 0 5px 15px -3px rgba(0,0,0,0.2), 0 8px 10px -5px rgba(0,0,0,0.14);
-      background: white;
+      border-radius: var(--radius-md, 12px);
+      box-shadow: var(--shadow-xl, 0 20px 48px rgba(0,63,92,0.14));
+      background: var(--color-surface, #fff);
     }
-    .cdk-drag-placeholder { opacity: 0.3; }
-    .cdk-drag-animating { transition: transform 250ms cubic-bezier(0, 0, 0.2, 1); }
-    .card-list.cdk-drop-list-dragging .card:not(.cdk-drag-placeholder) {
-      transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
-    }
-    
+    .cdk-drag-placeholder { opacity: 0.25; }
+    .cdk-drag-animating { transition: transform 250ms cubic-bezier(0,0,0.2,1); }
+    .card-list.cdk-drop-list-dragging .card:not(.cdk-drag-placeholder) { transition: transform 250ms cubic-bezier(0,0,0.2,1); }
+
     .card-header {
       display: flex;
       justify-content: space-between;
       margin-bottom: 8px;
       font-weight: 700;
-      font-size: 1.1rem;
-      border-bottom: 1px solid #f0f0f0;
-      padding-bottom: 4px;
+      font-size: 1rem;
+      border-bottom: 1px solid var(--color-border-light, #e8f1f7);
+      padding-bottom: 6px;
     }
-    .order-id { color: #1f6f8b; }
-    .time { font-size: 0.85rem; color: #666; font-weight: normal; }
-    .card-body ul {
-      margin: 0;
-      padding-left: 20px;
-      font-size: 0.9rem;
-    }
+    .order-id { color: var(--color-primary, #005f87); }
+    .time { font-size: 0.82rem; color: var(--color-text-medium, #4a6572); font-weight: normal; }
+    .card-body ul { margin: 0; padding-left: 18px; font-size: 0.9rem; color: var(--color-text-high, #0d2633); }
     .card-body li { margin-bottom: 4px; }
-    .agregados {
-      font-size: 0.8rem;
-      color: #d97706;
-      margin-left: 4px;
-    }
-    .card-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 8px;
-    }
+    .agregados { font-size: 0.78rem; color: var(--color-secondary, #00897b); margin-left: 4px; }
+    .card-actions { display: flex; gap: 8px; margin-top: 10px; }
     .action-btn {
-      padding: 6px 10px;
-      border-radius: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm, 6px);
       border: none;
       cursor: pointer;
       font-weight: 700;
+      font-size: 0.82rem;
+      font-family: 'Inter', sans-serif;
     }
-    .action-btn.deliver { background: #059669; color: white; }
-    .action-btn.cancel { background: #b42318; color: white; }
-    .empty-msg {
-      text-align: center;
-      color: #94a3b8;
-      font-size: 0.9rem;
-      padding: 20px 0;
+    .action-btn.deliver { background: var(--color-success, #1a7f5c); color: #fff; }
+    .action-btn.cancel { background: var(--color-error, #c62828); color: #fff; }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .empty-msg { text-align: center; color: var(--color-text-low, #7a9aaa); font-size: 0.9rem; padding: 24px 0; }
+
+    @media (max-width: 768px) {
+      .board-container { padding: 12px; height: auto; min-height: calc(100vh - 64px); }
+      .board { flex-direction: column; overflow-x: visible; overflow-y: auto; gap: 16px; }
+      .column { min-width: 0; max-height: none; }
+      .card-list { min-height: 80px; }
+      .board-header h2 { font-size: 1.2rem; }
+      .board-header p { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .board-container { padding: 10px; }
+      .board-header { margin-bottom: 12px; }
+      .card { padding: 10px; }
     }
   `]
 })
 export class KitchenBoardComponent implements OnInit, OnDestroy {
   private ventasService = inject(VentasService);
-  private pollInterval: any;
+  private sseService = inject(VentasSseService);
+  private sseSub?: Subscription;
 
   nuevos: VentaResponse[] = [];
   enPreparacion: VentaResponse[] = [];
@@ -268,29 +256,41 @@ export class KitchenBoardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadVentas();
-    // Refresco cada 15 segundos
-    this.pollInterval = setInterval(() => {
-      this.loadVentas();
-    }, 15000);
+
+    // Habilitar conexión SSE en tiempo real
+    this.sseService.connect();
+    this.sseSub = this.sseService.ventas$.subscribe({
+      next: (ventas: VentaResponse[]) => {
+        this.updateLocalLists(ventas);
+      },
+      error: (err) => {
+        console.error('Error en stream SSE de cocina', err);
+      }
+    });
   }
 
   ngOnDestroy() {
-    if (this.pollInterval) {
-      clearInterval(this.pollInterval);
+    if (this.sseSub) {
+      this.sseSub.unsubscribe();
     }
+    this.sseService.disconnect();
   }
 
   loadVentas() {
     this.ventasService.getVentasCocina().subscribe({
       next: (ventas: VentaResponse[]) => {
-        this.nuevos = ventas.filter(v => this.isEstadoNuevo(v.estadoVenta));
-        this.enPreparacion = ventas.filter(v => this.isEstadoPreparacion(v.estadoVenta));
-        this.listos = ventas.filter(v => this.isEstadoListo(v.estadoVenta));
+        this.updateLocalLists(ventas);
       },
       error: err => {
         console.error('Error cargando ventas de cocina', err);
       }
     });
+  }
+
+  private updateLocalLists(ventas: VentaResponse[]) {
+    this.nuevos = ventas.filter(v => this.isEstadoNuevo(v.estadoVenta));
+    this.enPreparacion = ventas.filter(v => this.isEstadoPreparacion(v.estadoVenta));
+    this.listos = ventas.filter(v => this.isEstadoListo(v.estadoVenta));
   }
 
   getPlatoNombre(detalle: VentaResponse['detalles'][number]): string {

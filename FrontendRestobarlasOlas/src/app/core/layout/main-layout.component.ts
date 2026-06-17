@@ -23,6 +23,7 @@ import { AppFooterComponent } from '../../shared/components/app-footer.component
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      background-color: var(--color-bg, #f7f9fc);
     }
     .layout-main {
       flex: 1;

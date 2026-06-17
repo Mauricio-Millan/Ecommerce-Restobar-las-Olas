@@ -6,4 +6,6 @@ export interface UserProfile {
   rol?: string;
   id_rol?: number;
   activo?: boolean;
+  dni?: string;
+  celular?: string;
 }

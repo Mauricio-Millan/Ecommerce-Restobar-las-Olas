@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -17,7 +17,7 @@ import { StorageService } from '../../../core/storage/storage.service';
 @Component({
   selector: 'platos-admin',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatButtonModule, MatListModule, MatIconModule],
+  imports: [DecimalPipe, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatButtonModule, MatListModule, MatIconModule],
   template: `
     <div class="admin-grid">
       <section class="panel form-panel">
@@ -39,23 +39,31 @@ import { StorageService } from '../../../core/storage/storage.service';
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Categoría</mat-label>
             <mat-select formControlName="categoriaId">
-              <mat-option *ngIf="!categorias().length" [disabled]="true">Sin categorías disponibles</mat-option>
-              <mat-option *ngFor="let c of categorias()" [value]="c.id">{{ c.nombre || ('ID ' + c.id) }}</mat-option>
+              @if (!categorias().length) {
+                <mat-option [disabled]="true">Sin categorías disponibles</mat-option>
+              }
+              @for (c of categorias(); track c.id) {
+                <mat-option [value]="c.id">{{ c.nombre || ('ID ' + c.id) }}</mat-option>
+              }
             </mat-select>
           </mat-form-field>
-          <p class="form-hint" *ngIf="loadingCategorias()">Cargando categorías...</p>
-          <p class="form-hint error" *ngIf="errorCategorias()">{{ errorCategorias() }}</p>
+          @if (loadingCategorias()) { <p class="form-hint">Cargando categorías...</p> }
+          @if (errorCategorias()) { <p class="form-hint error">{{ errorCategorias() }}</p> }
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Precio</mat-label>
             <input matInput type="number" step="0.01" formControlName="precio" />
           </mat-form-field>
-          <div class="file-upload full-width" style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+          <div class="file-upload full-width">
             <button type="button" mat-stroked-button color="primary" (click)="imageInput.click()">
               <mat-icon>upload_file</mat-icon> Subir Imagen
             </button>
             <input hidden type="file" #imageInput accept="image/*" (change)="onImageSelected($event)" />
-            <span class="file-name" *ngIf="selectedImage()" style="font-size: 0.85rem; color: #1f6f8b;">{{ selectedImage()?.name }}</span>
-            <span class="file-name" *ngIf="!selectedImage() && platoForm.get('urlImagen')?.value" style="font-size: 0.85rem; color: #666;">Imagen actual cargada</span>
+            @if (selectedImage()) {
+              <span class="file-name selected">{{ selectedImage()?.name }}</span>
+            }
+            @if (!selectedImage() && platoForm.get('urlImagen')?.value) {
+              <span class="file-name">Imagen actual cargada</span>
+            }
           </div>
           <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
           <div class="actions">
@@ -75,55 +83,62 @@ import { StorageService } from '../../../core/storage/storage.service';
           </div>
           <button mat-stroked-button type="button" (click)="loadPlatos()">Recargar</button>
         </div>
-        <p class="state" *ngIf="loadingPlatos()">Cargando platos...</p>
-        <p class="state error" *ngIf="errorPlatos()">{{ errorPlatos() }}</p>
-        <p class="state empty" *ngIf="!loadingPlatos() && !platos().length">No hay platos registrados.</p>
-        <div class="list" role="list" *ngIf="platos().length">
-          <div class="list-item" role="listitem" *ngFor="let plato of platos()">
-            <div class="item-body">
-              <div class="item-title">{{ plato.nombre }}</div>
-              <div class="item-sub">{{ plato.descripcion || 'Plato sin descripcion' }}</div>
-            </div>
-            <div class="item-meta">
-              <span class="price">S/ {{ plato.precio | number:'1.2-2' }}</span>
-              <span class="pill" [class.inactive]="!plato.activo">{{ plato.activo ? 'Activo' : 'Inactivo' }}</span>
-            </div>
-            <div class="item-actions">
-              <button mat-icon-button color="primary" (click)="editPlato(plato)">
-                <mat-icon>edit</mat-icon>
-              </button>
-              <button mat-icon-button color="warn" (click)="deletePlato(plato)">
-                <mat-icon>delete</mat-icon>
-              </button>
-            </div>
+        @if (loadingPlatos()) { <p class="state">Cargando platos...</p> }
+        @if (errorPlatos()) { <p class="state error">{{ errorPlatos() }}</p> }
+        @if (!loadingPlatos() && !platos().length) { <p class="state empty">No hay platos registrados.</p> }
+        @if (platos().length) {
+          <div class="list" role="list">
+            @for (plato of platos(); track plato.id) {
+              <div class="list-item" role="listitem">
+                <div class="item-body">
+                  <div class="item-title">{{ plato.nombre }}</div>
+                  <div class="item-sub">{{ plato.descripcion || 'Plato sin descripcion' }}</div>
+                </div>
+                <div class="item-meta">
+                  <span class="price">S/ {{ plato.precio | number:'1.2-2' }}</span>
+                  <span class="pill" [class.inactive]="!plato.activo">{{ plato.activo ? 'Activo' : 'Inactivo' }}</span>
+                </div>
+                <div class="item-actions">
+                  <button mat-icon-button color="primary" (click)="editPlato(plato)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deletePlato(plato)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
           </div>
-        </div>
+        }
       </section>
     </div>
   `,
   styles: [`
-    :host { font-family: 'Source Sans 3', sans-serif; color: #1d2b2a; }
-    h3 { font-family: 'Fraunces', serif; margin: 0; font-size: 1.25rem; }
-    .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.68rem; color: rgba(29, 43, 42, 0.6); margin: 0 0 4px; }
+    :host { font-family: 'Inter', sans-serif; color: var(--color-text-high, #0d2633); }
+    h3 { font-family: 'Fraunces', serif; margin: 0; font-size: 1.25rem; color: var(--color-primary-dark, #003f5c); }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.18em; font-size: 0.68rem; color: var(--color-secondary, #00897b); margin: 0 0 4px; font-weight: 600; }
     .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .panel { background: #ffffff; border-radius: 18px; border: 1px solid rgba(31, 111, 139, 0.12); padding: 18px; box-shadow: 0 18px 40px rgba(18, 35, 32, 0.08); }
+    .panel { background: var(--color-surface, #fff); border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-light, #e8f1f7); padding: 18px; box-shadow: var(--shadow-md); }
     .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
     .form-body { display: grid; gap: 12px; }
     .full-width { width: 100%; }
+    .file-upload { margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+    .file-name { font-size: 0.85rem; color: var(--color-text-medium, #4a6572); }
+    .file-name.selected { color: var(--color-primary, #005f87); }
     .actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 4px; }
-    .form-hint { margin: 0; font-size: 0.85rem; color: rgba(29, 43, 42, 0.7); }
-    .form-hint.error { color: #b42318; }
-    .state { margin: 8px 0; font-size: 0.9rem; }
-    .state.error { color: #b42318; }
-    .state.empty { color: rgba(29, 43, 42, 0.7); }
-    .list { display: grid; gap: 12px; }
-    .list-item { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: linear-gradient(120deg, rgba(246, 244, 239, 0.9), #ffffff); border: 1px solid rgba(31, 111, 139, 0.12); }
-    .item-title { font-weight: 700; }
-    .item-sub { font-size: 0.86rem; color: rgba(29, 43, 42, 0.7); }
+    .form-hint { margin: 0; font-size: 0.85rem; color: var(--color-text-medium, #4a6572); }
+    .form-hint.error { color: var(--color-error, #c62828); }
+    .state { margin: 8px 0; font-size: 0.9rem; color: var(--color-text-medium, #4a6572); }
+    .state.error { color: var(--color-error, #c62828); }
+    .state.empty { color: var(--color-text-low, #7a9aaa); }
+    .list { display: grid; gap: 10px; }
+    .list-item { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 12px; border-radius: var(--radius-md, 12px); background: var(--color-surface-raised, #f0f6fa); border: 1px solid var(--color-border-light, #e8f1f7); }
+    .item-title { font-weight: 700; color: var(--color-text-high, #0d2633); }
+    .item-sub { font-size: 0.86rem; color: var(--color-text-medium, #4a6572); }
     .item-meta { display: grid; justify-items: end; gap: 6px; }
-    .price { font-weight: 700; color: #1f6f8b; }
-    .pill { font-size: 0.72rem; padding: 2px 10px; border-radius: 999px; background: rgba(31, 111, 139, 0.12); color: #1f6f8b; }
-    .pill.inactive { background: rgba(180, 35, 24, 0.12); color: #b42318; }
+    .price { font-weight: 700; color: var(--color-primary, #005f87); }
+    .pill { font-size: 0.72rem; padding: 2px 10px; border-radius: var(--radius-pill, 999px); background: rgba(0,95,135,0.1); color: var(--color-primary, #005f87); font-weight: 600; }
+    .pill.inactive { background: rgba(198,40,40,0.1); color: var(--color-error, #c62828); }
     .item-actions { display: flex; gap: 4px; }
 
     @media (max-width: 980px) {

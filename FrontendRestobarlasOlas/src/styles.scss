@@ -1,103 +1,336 @@
 
 @use '@angular/material' as mat;
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap');
-
+// ─── Material Theme v20 ───────────────────────────────────────────────────────
 html {
   color-scheme: light;
+
   @include mat.theme((
     color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary:  mat.$cyan-palette,
+      tertiary: mat.$spring-green-palette,
     ),
-    typography: Roboto,
+    typography: (
+      plain-family:   '"Inter", "Helvetica Neue", sans-serif',
+      brand-family:   '"Fraunces", Georgia, serif',
+      bold-weight:    700,
+      medium-weight:  500,
+      regular-weight: 400,
+    ),
     density: 0,
   ));
+
+  // Sobreescritura de tokens M3 con paleta oceánica
+  --mat-sys-primary:              #005f87;
+  --mat-sys-on-primary:           #ffffff;
+  --mat-sys-primary-container:    #e8f4f9;
+  --mat-sys-on-primary-container: #003f5c;
+
+  --mat-sys-secondary:              #00897b;
+  --mat-sys-on-secondary:           #ffffff;
+  --mat-sys-secondary-container:    #e0f5f3;
+  --mat-sys-on-secondary-container: #005f56;
+
+  --mat-sys-tertiary:              #e05c47;
+  --mat-sys-on-tertiary:           #ffffff;
+  --mat-sys-tertiary-container:    #fbe9e7;
+  --mat-sys-on-tertiary-container: #7b1d0e;
+
+  --mat-sys-error:              #c62828;
+  --mat-sys-on-error:           #ffffff;
+  --mat-sys-error-container:    #fdecea;
+  --mat-sys-on-error-container: #7b1212;
+
+  --mat-sys-surface:              #ffffff;
+  --mat-sys-on-surface:           #0d2633;
+  --mat-sys-surface-variant:      #e4eff6;
+  --mat-sys-on-surface-variant:   #4a6572;
+  --mat-sys-outline:              #d0e3ed;
+  --mat-sys-outline-variant:      #e8f1f7;
+  --mat-sys-background:           #f7f9fc;
+  --mat-sys-on-background:        #0d2633;
 }
 
+// ─── Design Tokens ────────────────────────────────────────────────────────────
 :root {
-  --primary: #1f6f8b;
-  --accent: #8b5e3c;
-  --bg: #f6f4ef;
-  --text: #233238;
+  // Primary — Deep Ocean
+  --color-primary:           #005f87;
+  --color-primary-dark:      #003f5c;
+  --color-primary-light:     #3a88aa;
+  --color-primary-surface:   #e8f4f9;
+
+  // Secondary — Wave Teal
+  --color-secondary:         #00897b;
+  --color-secondary-dark:    #005f56;
+  --color-secondary-light:   #4db6ac;
+  --color-secondary-surface: #e0f5f3;
+
+  // Accent — Coral
+  --color-accent:            #e05c47;
+  --color-accent-light:      #fbe9e7;
+
+  // Surface / Neutral
+  --color-bg:                #f7f9fc;
+  --color-surface:           #ffffff;
+  --color-surface-raised:    #f0f6fa;
+  --color-surface-elevated:  #e4eff6;
+  --color-border:            #d0e3ed;
+  --color-border-light:      #e8f1f7;
+
+  // Text
+  --color-text-high:         #0d2633;
+  --color-text-medium:       #4a6572;
+  --color-text-low:          #7a9aaa;
+  --color-text-disabled:     #b0c8d4;
+  --color-text-on-primary:   #ffffff;
+
+  // Status
+  --color-success:           #1a7f5c;
+  --color-success-surface:   #e3f6ee;
+  --color-warning:           #c97a10;
+  --color-warning-surface:   #fff3e0;
+  --color-error:             #c62828;
+  --color-error-surface:     #fdecea;
+  --color-info:              #0277bd;
+  --color-info-surface:      #e1f0fb;
+
+  // Dark Sidebar — Deep Sea
+  --sidebar-bg:              #071b2b;
+  --sidebar-bg-header:       #040f1a;
+  --sidebar-text:            #a8c4d5;
+  --sidebar-text-muted:      #4a7086;
+  --sidebar-border:          rgba(168, 196, 213, 0.08);
+  --sidebar-active:          #005f87;
+  --sidebar-active-text:     #ffffff;
+  --sidebar-hover:           rgba(168, 196, 213, 0.07);
+  --sidebar-icon-accent:     #4db6ac;
+
+  // Spacing (base 4px)
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  // Border radius
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   20px;
+  --radius-pill: 999px;
+
+  // Shadows (tintadas con primary-dark)
+  --shadow-sm:  0 1px 4px rgba(0, 63, 92, 0.08);
+  --shadow-md:  0 4px 16px rgba(0, 63, 92, 0.10);
+  --shadow-lg:  0 10px 32px rgba(0, 63, 92, 0.12);
+  --shadow-xl:  0 20px 48px rgba(0, 63, 92, 0.14);
+
+  // Transitions
+  --transition-fast: 150ms ease;
+  --transition-base: 220ms ease;
 }
 
+// ─── Base ─────────────────────────────────────────────────────────────────────
 html, body { height: 100%; }
+
 body {
   margin: 0;
-  font: var(--mat-sys-body-medium);
-  background: linear-gradient(180deg, #f4f7f9 0%, var(--bg) 100%);
-  color: var(--mat-sys-on-surface);
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-high);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+// ─── Layout Utilities ─────────────────────────────────────────────────────────
 .page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: var(--space-6);
+  background-color: var(--color-bg);
 }
 
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: var(--space-5);
+}
+
+.full-width { width: 100%; }
+
+// ─── Auth Utilities ───────────────────────────────────────────────────────────
 .auth-shell {
   width: 100%;
   max-width: 480px;
 }
 
 .auth-card {
-  border-left: 6px solid var(--primary);
+  border-top: 3px solid var(--color-primary) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border-left: none !important;
+  overflow: hidden;
 }
 
-.auth-card h2 {
-  margin-top: 0;
-}
-
-.full-width {
-  width: 100%;
-}
+.auth-card h2 { margin-top: 0; }
 
 .actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: var(--space-4);
 }
 
 .auth-message {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 8px;
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
   font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .auth-message.success {
-  background: #e8f5e9;
-  color: #1b5e20;
+  background: var(--color-success-surface);
+  color: var(--color-success);
+  border: 1px solid rgba(26, 127, 92, 0.2);
 }
 
 .auth-message.error {
-  background: #ffebee;
-  color: #b00020;
+  background: var(--color-error-surface);
+  color: var(--color-error);
+  border: 1px solid rgba(198, 40, 40, 0.2);
 }
 
 .footer-link {
-  margin-top: 16px;
+  margin-top: var(--space-4);
+  text-align: center;
 }
 
 .footer-link a {
-  color: var(--primary);
+  color: var(--color-primary);
   cursor: pointer;
   text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+
+// ─── Typography Utilities ─────────────────────────────────────────────────────
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-low);
+  margin: 0 0 4px;
+}
+
+// ─── Status Badges ────────────────────────────────────────────────────────────
+.status-badge {
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.status-badge.nuevo       { background: var(--color-warning-surface); color: var(--color-warning); }
+.status-badge.preparacion { background: var(--color-info-surface);    color: var(--color-info); }
+.status-badge.listo       { background: var(--color-success-surface); color: var(--color-success); }
+.status-badge.entregado   { background: var(--color-primary-surface); color: var(--color-primary); }
+.status-badge.cancelado   { background: #f3f4f6;                      color: #6b7280; }
+
+// ─── Pill Chip ────────────────────────────────────────────────────────────────
+.pill {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+  display: inline-block;
+}
+
+.pill.inactive {
+  background: var(--color-error-surface);
+  color: var(--color-error);
+}
+
+// ─── Admin Panel Pattern ──────────────────────────────────────────────────────
+.panel {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-md);
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+// ─── Angular Material Global Overrides ───────────────────────────────────────
+mat-card, .mat-mdc-card {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  border: 1px solid var(--color-border-light);
+}
+
+.mat-mdc-form-field {
+  --mdc-outlined-text-field-focus-outline-color: var(--color-primary);
+  --mdc-outlined-text-field-label-text-color: var(--color-text-medium);
+  --mdc-outlined-text-field-focus-label-text-color: var(--color-primary);
+  --mdc-outlined-text-field-input-text-color: var(--color-text-high);
+}
+
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-raised-button.mat-primary {
+  border-radius: var(--radius-pill) !important;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.mat-mdc-outlined-button {
+  border-radius: var(--radius-pill) !important;
+}
+
+.mat-toolbar {
+  background: transparent;
+}
+
+// ─── Responsive ───────────────────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .container { padding-inline: var(--space-4); }
+  .panel { padding: var(--space-4); }
+  .panel-header { flex-direction: column; align-items: flex-start; }
 }
 
 @media (max-width: 480px) {
-  .page {
-    padding: 16px;
-  }
+  .page { padding: var(--space-3); }
+  .container { padding-inline: var(--space-3); }
+  .actions { flex-direction: column; }
+  .auth-shell { max-width: 100%; }
+  .panel { padding: var(--space-3); }
 
-  .actions {
-    flex-direction: column;
-  }
+  // Material overrides for small screens
+  .mat-mdc-card { border-radius: var(--radius-md) !important; }
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+@media (max-width: 360px) {
+  .page { padding: var(--space-2); }
+}

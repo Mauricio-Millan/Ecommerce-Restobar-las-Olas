@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { signal, inject } from '@angular/core';
@@ -13,7 +12,7 @@ import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'auth-login-page',
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatDividerModule],
+  imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatDividerModule],
   template: `
     <div class="page">
       <div class="auth-shell">
@@ -28,13 +27,13 @@ import { MatDividerModule } from '@angular/material/divider';
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Email</mat-label>
                 <input matInput id="email" formControlName="email" type="email" />
-                <mat-error *ngIf="form.get('email')?.touched && form.get('email')?.invalid">Email inválido</mat-error>
+                <mat-error>Email inválido</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Contraseña</mat-label>
                 <input matInput id="password" formControlName="password" type="password" />
-                <mat-error *ngIf="form.get('password')?.touched && form.get('password')?.invalid">Contraseña requerida</mat-error>
+                <mat-error>Contraseña requerida (mín. 8 caracteres)</mat-error>
               </mat-form-field>
 
               <div class="actions">
@@ -46,15 +45,27 @@ import { MatDividerModule } from '@angular/material/divider';
           <mat-divider></mat-divider>
 
           <mat-card-content>
-            <div *ngIf="feedbackMessage()" class="auth-message" [class.success]="feedbackType() === 'success'" [class.error]="feedbackType() === 'error'">
-              {{ feedbackMessage() }}
-            </div>
+            @if (feedbackMessage()) {
+              <div class="auth-message" [class.success]="feedbackType() === 'success'" [class.error]="feedbackType() === 'error'">
+                {{ feedbackMessage() }}
+              </div>
+            }
             <p class="footer-link">¿No tienes cuenta? <a (click)="goRegister()">Regístrate</a></p>
           </mat-card-content>
         </mat-card>
       </div>
     </div>
   `,
+  styles: [`
+    mat-card-title {
+      font-family: 'Fraunces', serif !important;
+      color: var(--color-primary-dark, #003f5c) !important;
+      font-size: 1.6rem !important;
+    }
+    mat-card-subtitle {
+      color: var(--color-text-medium, #4a6572) !important;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LoginPageComponent {

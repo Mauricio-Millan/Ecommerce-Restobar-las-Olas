@@ -30,7 +30,7 @@ El rol de Cliente tiene la mayor cantidad de historias, centradas en la experien
 * **Pedido y Personalización (Iteración 2):**
 
     * Permite ver la descripción detallada del plato, incluyendo ingredientes, tiempo de preparación, fotos en alta resolución, y advertencias de alérgenos.
-    * El cliente puede **Seleccionar** y **Personalizar** el plato (ej. niveles de cocción/picante, ingredientes extra con coste en tiempo real).
+    * El cliente puede **Seleccionar** y **Personalizar** el plato (ej ingredientes extra con coste en tiempo real).
     * La **Gestión de cantidad** incluye la eliminación del producto si se presiona el botón "-" cuando la cantidad es 1.
 
 * **Pago y Checkout (Iteración 3):**
@@ -58,7 +58,6 @@ Las historias del Administrador se centran en el control de negocio (Iteración 
 
 * **Consultar ventas:** Permite generar reportes gráficos (platos más vendidos) y exportar las ventas diarias a formato Excel (.xlsx) o CSV.
 * **Gestionar cuentas:** Faculta al administrador para activar o desactivar el acceso de personal buscar por dni o nombre-apellido y asignar roles con permisos limitados (ej. Cocina no puede ver reportes de ventas).
-
 ### **Programadores Responsables**
 
 Cuatro programadores son responsables de las historias:

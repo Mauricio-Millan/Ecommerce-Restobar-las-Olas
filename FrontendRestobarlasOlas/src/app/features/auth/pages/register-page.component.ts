@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { signal, inject } from '@angular/core';
@@ -16,7 +15,7 @@ import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'auth-register-page',
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatDividerModule],
+  imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatDividerModule],
   template: `
     <div class="page">
       <div class="auth-shell">
@@ -31,37 +30,37 @@ import { MatDividerModule } from '@angular/material/divider';
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Nombre</mat-label>
                 <input matInput id="nombre" type="text" formControlName="nombre" />
-                <mat-error *ngIf="form.get('nombre')?.touched && form.get('nombre')?.invalid">Nombre requerido</mat-error>
+                <mat-error>Nombre requerido</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Apellido</mat-label>
                 <input matInput id="apellido" type="text" formControlName="apellido" />
-                <mat-error *ngIf="form.get('apellido')?.touched && form.get('apellido')?.invalid">Apellido requerido</mat-error>
+                <mat-error>Apellido requerido</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Email</mat-label>
                 <input matInput id="email" type="email" formControlName="email" />
-                <mat-error *ngIf="form.get('email')?.touched && form.get('email')?.invalid">Email inválido</mat-error>
+                <mat-error>Email inválido</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>DNI</mat-label>
                 <input matInput id="dni" type="text" formControlName="dni" />
-                <mat-error *ngIf="form.get('dni')?.touched && form.get('dni')?.invalid">DNI debe tener 8 dígitos</mat-error>
+                <mat-error>DNI debe tener 8 dígitos</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Celular</mat-label>
                 <input matInput id="celular" type="text" formControlName="celular" />
-                <mat-error *ngIf="form.get('celular')?.touched && form.get('celular')?.invalid">Celular debe tener 9 dígitos</mat-error>
+                <mat-error>Celular debe tener 9 dígitos</mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Contraseña</mat-label>
                 <input matInput id="password" type="password" formControlName="password" />
-                <mat-error *ngIf="form.get('password')?.touched && form.get('password')?.invalid">Mínimo 8 caracteres</mat-error>
+                <mat-error>Mínimo 8 caracteres</mat-error>
               </mat-form-field>
 
               <div class="actions">
@@ -73,13 +72,25 @@ import { MatDividerModule } from '@angular/material/divider';
 
           <mat-divider></mat-divider>
 
-          <mat-card-content *ngIf="error()">
-            <div class="auth-message error">{{ error() }}</div>
-          </mat-card-content>
+          @if (error()) {
+            <mat-card-content>
+              <div class="auth-message error">{{ error() }}</div>
+            </mat-card-content>
+          }
         </mat-card>
       </div>
     </div>
   `,
+  styles: [`
+    mat-card-title {
+      font-family: 'Fraunces', serif !important;
+      color: var(--color-primary-dark, #003f5c) !important;
+      font-size: 1.6rem !important;
+    }
+    mat-card-subtitle {
+      color: var(--color-text-medium, #4a6572) !important;
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RegisterPageComponent {

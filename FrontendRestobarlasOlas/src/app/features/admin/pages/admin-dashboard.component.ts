@@ -1,11 +1,10 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, MatCardModule],
+  imports: [MatCardModule],
   template: `
     <div class="admin-dashboard">
       <header class="admin-hero">
@@ -40,18 +39,17 @@ import { MatCardModule } from '@angular/material/card';
     </div>
   `,
   styles: [`
-    :host { font-family: 'Source Sans 3', sans-serif; color: #1d2b2a; display: block; }
+    :host { font-family: 'Inter', sans-serif; color: var(--color-text-high, #0d2633); display: block; }
     .admin-dashboard { width: min(1200px, 100%); margin: 0 auto; }
     .admin-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: stretch; margin-bottom: 24px; }
-    .eyebrow { text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.7rem; color: rgba(29, 43, 42, 0.6); margin: 0 0 6px; }
-    h1 { font-family: 'Fraunces', serif; font-size: clamp(1.8rem, 2.6vw, 2.5rem); margin: 0 0 8px; color: #0f172a; }
-    .hero-sub { margin: 0; font-size: 1.05rem; color: #475569; }
+    .eyebrow { text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.7rem; color: var(--color-secondary, #00897b); margin: 0 0 6px; font-weight: 600; }
+    h1 { font-family: 'Fraunces', serif; font-size: clamp(1.8rem, 2.6vw, 2.5rem); margin: 0 0 8px; color: var(--color-primary-dark, #003f5c); }
+    .hero-sub { margin: 0; font-size: 1.05rem; color: var(--color-text-medium, #4a6572); }
     .hero-cards { display: grid; gap: 16px; }
-    .hero-card { border-radius: 16px; border: 1px solid rgba(31, 111, 139, 0.12); box-shadow: 0 10px 25px rgba(15, 23, 42, 0.05); }
-    .hero-card.accent { background: linear-gradient(140deg, rgba(31, 111, 139, 0.08), rgba(244, 178, 134, 0.12)); }
-    .hero-card ul { margin: 8px 0 0; padding-left: 20px; color: #334155; }
-    
-    mat-card-title { font-size: 1.1rem; font-weight: 700; color: #0f172a; }
+    .hero-card { border-radius: var(--radius-lg, 16px); border: 1px solid var(--color-border-light, #e8f1f7); box-shadow: var(--shadow-md); }
+    .hero-card.accent { background: linear-gradient(140deg, var(--color-primary-surface, #e8f4f9), var(--color-secondary-surface, #e0f5f3)); }
+    .hero-card ul { margin: 8px 0 0; padding-left: 20px; color: var(--color-text-medium, #4a6572); }
+    mat-card-title { font-size: 1.1rem !important; font-weight: 700 !important; color: var(--color-primary-dark, #003f5c) !important; }
     mat-card-content { padding-top: 8px; }
 
     @media (max-width: 980px) {

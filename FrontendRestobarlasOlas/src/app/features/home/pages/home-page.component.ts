@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 
 import { Agregado } from '../../../core/catalog/agregado.model';
 import { Plato } from '../../../core/catalog/plato.model';
@@ -12,55 +12,182 @@ import { PlatoDetailModalComponent } from '../components/plato-detail-modal.comp
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatDialogModule],
+  imports: [DecimalPipe, MatCardModule, MatDialogModule],
   template: `
     <div class="home-shell">
-      <section class="banner-placeholder" aria-label="Banner principal pendiente"></section>
+      <!-- Hero Section -->
+      <section class="hero-section">
+        <div class="hero-content">
+          <p class="eyebrow">Restobar Las Olas</p>
+          <h1 class="hero-title">Sabores del mar,<br><em>servidos frescos</em></h1>
+          <p class="hero-sub">Cocina de barrio con alma marina. Selecciona tu plato y personalízalo a tu gusto.</p>
+        </div>
+      </section>
 
+      <!-- Platos Grid -->
       <main class="content-grid">
-        <section class="section-block">
-          <mat-card class="section-card">
-            <mat-card-header>
-              <mat-card-title>Selecciona tu plato</mat-card-title>
-              <mat-card-subtitle>Platos activos disponibles para personalizar</mat-card-subtitle>
-            </mat-card-header>
-            <mat-card-content>
-              <div class="platos-grid">
-                <button class="plato-card" *ngFor="let plato of platos()" type="button" (click)="selectPlato(plato)">
-                  <div class="plato-image" [style.backgroundImage]="plato.urlImagen ? 'url(' + plato.urlImagen + ')' : 'linear-gradient(135deg, #1f6f8b, #8b5e3c)'">
-                    <span *ngIf="!plato.urlImagen">Sin imagen</span>
-                  </div>
-                  <div class="plato-body">
-                    <div class="plato-name">{{ plato.nombre }}</div>
-                    <div class="plato-desc">{{ plato.descripcion || 'Plato del día' }}</div>
-                    <div class="plato-price">S/ {{ plato.precio | number:'1.2-2' }}</div>
-                  </div>
-                </button>
+        <div class="section-header">
+          <h2 class="section-title">Nuestros platos</h2>
+          <p class="section-sub">Haz clic en un plato para personalizarlo con agregados</p>
+        </div>
+        <div class="platos-grid">
+          @for (plato of platos(); track plato.id) {
+            <button class="plato-card" type="button" (click)="selectPlato(plato)">
+              <div class="plato-image"
+                   [style.backgroundImage]="plato.urlImagen ? 'url(' + plato.urlImagen + ')' : 'linear-gradient(135deg, var(--color-primary), var(--color-secondary))'">
+                @if (!plato.urlImagen) {
+                  <span class="no-img-label">Sin imagen</span>
+                }
               </div>
-            </mat-card-content>
-          </mat-card>
-        </section>
+              <div class="plato-body">
+                <div class="plato-name">{{ plato.nombre }}</div>
+                <div class="plato-desc">{{ plato.descripcion || 'Plato del día' }}</div>
+                <div class="plato-price">S/ {{ plato.precio | number:'1.2-2' }}</div>
+              </div>
+            </button>
+          }
+        </div>
       </main>
     </div>
   `,
   styles: [`
-    .home-shell { min-height: 100vh; background: linear-gradient(180deg, #f4f7f9 0%, #f6f4ef 100%); }
-    .banner-placeholder { min-height: 220px; background: rgba(255,255,255,.62); border:1px dashed rgba(31,111,139,.35); margin:20px; border-radius:16px; box-shadow:0 10px 30px rgba(35,50,56,.06); }
-    .content-grid { display:grid; grid-template-columns: 1fr; gap:20px; padding:0 20px 24px; max-width: 1200px; margin: 0 auto; }
-    .section-card { height:100%; }
-    .platos-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px; margin-top:16px; }
-    .plato-card { border:1px solid rgba(31,111,139,.14); background:#fff; border-radius:14px; overflow:hidden; text-align:left; padding:0; cursor:pointer; box-shadow:0 6px 16px rgba(35,50,56,.06); transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
-    .plato-card:hover { transform: translateY(-4px); box-shadow:0 12px 24px rgba(35,50,56,.12); border-color:#1f6f8b; }
-    .plato-image { height:160px; background-size: cover; background-position: center; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; }
-    .plato-body { padding:16px; }
-    .plato-name { font-weight:800; font-size:1.1rem; margin-bottom:4px; color:#1f6f8b; }
-    .plato-desc { font-size:.9rem; color:#566; min-height: 40px; }
-    .plato-price { margin-top:12px; font-weight:800; color:#1f6f8b; font-size:1.2rem; }
+    :host { display: block; font-family: 'Inter', sans-serif; }
 
-    @media (max-width: 980px) {
-      .content-grid { grid-template-columns: 1fr; }
+    .home-shell {
+      min-height: 100vh;
+      background-color: var(--color-bg, #f7f9fc);
     }
 
+    /* Hero */
+    .hero-section {
+      background: linear-gradient(135deg, var(--color-primary-dark, #003f5c) 0%, var(--color-primary, #005f87) 55%, var(--color-secondary-dark, #005f56) 100%);
+      padding: 72px 24px 80px;
+      text-align: center;
+      color: #ffffff;
+    }
+    .hero-content {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--color-secondary-light, #4db6ac);
+      margin: 0 0 16px;
+    }
+    .hero-title {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      margin: 0 0 20px;
+      line-height: 1.15;
+      color: #ffffff;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--color-secondary-light, #4db6ac);
+    }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: rgba(232, 244, 249, 0.85);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    /* Grid */
+    .content-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px 48px;
+    }
+    .section-header {
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--color-primary-dark, #003f5c);
+      margin: 0 0 6px;
+    }
+    .section-sub {
+      color: var(--color-text-medium, #4a6572);
+      font-size: 0.95rem;
+      margin: 0;
+    }
+    .platos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    /* Cards */
+    .plato-card {
+      border: 1px solid var(--color-border, #d0e3ed);
+      background: var(--color-surface, #ffffff);
+      border-radius: var(--radius-lg, 16px);
+      overflow: hidden;
+      text-align: left;
+      padding: 0;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm, 0 1px 4px rgba(0,63,92,0.08));
+      transition: transform var(--transition-base, 220ms ease),
+                  box-shadow var(--transition-base),
+                  border-color var(--transition-base);
+    }
+    .plato-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-lg, 0 10px 32px rgba(0,63,92,0.12));
+      border-color: var(--color-primary, #005f87);
+    }
+    .plato-image {
+      height: 180px;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .no-img-label {
+      color: rgba(255,255,255,0.8);
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: rgba(0,0,0,0.25);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .plato-body { padding: 16px; }
+    .plato-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+      color: var(--color-text-high, #0d2633);
+    }
+    .plato-desc {
+      font-size: 0.88rem;
+      color: var(--color-text-medium, #4a6572);
+      min-height: 38px;
+      line-height: 1.5;
+    }
+    .plato-price {
+      margin-top: 12px;
+      font-weight: 700;
+      color: var(--color-primary, #005f87);
+      font-size: 1.15rem;
+    }
+
+    @media (max-width: 600px) {
+      .hero-section { padding: 48px 16px 56px; }
+      .content-grid { padding: 28px 16px 36px; }
+      .platos-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    }
+
+    @media (max-width: 400px) {
+      .platos-grid { grid-template-columns: 1fr; }
+      .hero-title { font-size: 1.75rem; }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })

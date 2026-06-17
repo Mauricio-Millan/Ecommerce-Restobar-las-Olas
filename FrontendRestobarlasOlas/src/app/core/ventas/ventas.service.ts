@@ -27,4 +27,16 @@ export class VentasService {
   cancelarVenta(id: number): Observable<any> {
     return this.http.patch(`${environment.apiBaseUrl}/api/ventas/${id}/cancelar`, {});
   }
+
+  getVentaById(id: number): Observable<any> {
+    return this.http.get<any>(`${environment.apiBaseUrl}/api/ventas/${id}`);
+  }
+
+  getEstadoVenta(id: number): Observable<{ estadoVenta: string }> {
+    return this.http.get<{ estadoVenta: string }>(`${environment.apiBaseUrl}/api/ventas/${id}/estado`);
+  }
+
+  getVentasPorUsuario(usuarioId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${environment.apiBaseUrl}/api/ventas/usuario/${usuarioId}`);
+  }
 }

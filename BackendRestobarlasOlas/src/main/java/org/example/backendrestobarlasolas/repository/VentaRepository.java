@@ -15,6 +15,17 @@ public interface VentaRepository extends JpaRepository<Venta, Integer> {
 
     List<Venta> findByUsuario_Id(UUID usuarioId);
 
+    /**
+     * Obtiene todas las ventas de un usuario ordenadas de más reciente a más antigua,
+     * incluyendo detalles y plato para mapear a DTO sin problemas de lazy loading.
+     */
+    @Query("SELECT DISTINCT v FROM Venta v " +
+           "LEFT JOIN FETCH v.detalles d " +
+           "LEFT JOIN FETCH d.plato " +
+           "WHERE v.usuario.id = :usuarioId " +
+           "ORDER BY v.fechaVenta DESC")
+    List<Venta> findAllByUsuarioIdWithDetallesOrderByFechaVentaDesc(UUID usuarioId);
+
     java.util.Optional<Venta> findFirstByUsuario_IdAndEstadoVentaNotInOrderByFechaVentaDesc(UUID usuarioId, List<VentaEstado> estados);
 
     List<Venta> findByEstadoVentaNotInOrderByFechaVentaAsc(List<VentaEstado> estados);
@@ -59,5 +70,15 @@ public interface VentaRepository extends JpaRepository<Venta, Integer> {
            "AND v.fechaVenta >= :from " +
            "ORDER BY v.fechaVenta DESC")
     List<Venta> findByEstadosAndFechaDesde(java.util.List<VentaEstado> estados, java.time.OffsetDateTime from);
+
+    /**
+     * Obtiene ventas en un rango de fechas con detalles y platos cargados de forma temprana.
+     */
+    @Query("SELECT DISTINCT v FROM Venta v " +
+           "LEFT JOIN FETCH v.detalles d " +
+           "LEFT JOIN FETCH d.plato " +
+           "WHERE v.fechaVenta >= :start AND v.fechaVenta < :end " +
+           "ORDER BY v.fechaVenta DESC")
+    List<Venta> findVentasByFecha(java.time.OffsetDateTime start, java.time.OffsetDateTime end);
 }
 
