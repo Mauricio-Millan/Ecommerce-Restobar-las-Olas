@@ -11,8 +11,8 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { AdminService, UsuarioAdmin } from '../../../core/admin/admin.service';
 
 const ROLES = [
-  { id: 1, label: 'Administrador' },
-  { id: 2, label: 'Cliente' },
+  { id: 1, label: 'Cliente' },
+  { id: 2, label: 'Admin' },
   { id: 3, label: 'Cocinero' },
 ];
 
@@ -393,6 +393,11 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   }
 
   avatarClass(u: UsuarioAdmin): string {
+    const rolId = u.rol?.id;
+    if (rolId === 2) return 'admin';
+    if (rolId === 3) return 'cocinero';
+    if (rolId === 1) return 'cliente';
+
     const rol = u.rol?.rol?.toLowerCase() ?? '';
     if (rol.includes('admin')) return 'admin';
     if (rol.includes('cocinero')) return 'cocinero';
@@ -400,6 +405,11 @@ export class UsuariosAdminComponent implements OnInit, OnDestroy {
   }
 
   avatarIcon(u: UsuarioAdmin): string {
+    const rolId = u.rol?.id;
+    if (rolId === 2) return 'security';
+    if (rolId === 3) return 'soup_kitchen';
+    if (rolId === 1) return 'person_outline';
+
     const rol = u.rol?.rol?.toLowerCase() ?? '';
     if (rol.includes('admin')) return 'security';
     if (rol.includes('cocinero')) return 'soup_kitchen';
