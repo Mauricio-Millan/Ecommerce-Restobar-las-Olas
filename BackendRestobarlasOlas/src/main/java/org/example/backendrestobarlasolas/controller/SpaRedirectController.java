@@ -7,16 +7,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class SpaRedirectController {
 
     @GetMapping(value = {
-        "",
-        "/",
-        "/login",
-        "/register",
-        "/cocina",
-        "/menu",
-        "/carrito",
-        "/checkout",
-        "/seguimiento/**",
-        "/admin/**"
+            "",
+            "/",
+            "/login",
+            "/register",
+            "/cocina",
+            "/menu",
+            "/carrito",
+            "/checkout",
+            "/seguimiento/**",
+            "/admin/**"
     })
     public String forward() {
         return "forward:/index.html";

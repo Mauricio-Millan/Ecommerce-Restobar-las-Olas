@@ -41,14 +41,14 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
+                                "/v3/api-docs/**")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register-profile").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/api/auth/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
-                        .anyRequest().permitAll()
-                )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
+                        .anyRequest().permitAll())
+                .oauth2ResourceServer(
+                        oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable);
@@ -73,14 +73,17 @@ public class SecurityConfig {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Set<org.springframework.security.core.GrantedAuthority> authorities = new HashSet<>();
-            Collection<org.springframework.security.core.GrantedAuthority> jwtAuthorities = defaultAuthorities.convert(jwt);
+            Collection<org.springframework.security.core.GrantedAuthority> jwtAuthorities = defaultAuthorities
+                    .convert(jwt);
             authorities.addAll(jwtAuthorities);
 
             String customRole = extractCustomRole(jwt.getClaims());
             if (StringUtils.hasText(customRole)) {
-                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + customRole.trim().toUpperCase()));
+                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                        "ROLE_" + customRole.trim().toUpperCase()));
             }
-            authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_AUTHENTICATED"));
+            authorities
+                    .add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_AUTHENTICATED"));
             return authorities;
         });
         return converter;

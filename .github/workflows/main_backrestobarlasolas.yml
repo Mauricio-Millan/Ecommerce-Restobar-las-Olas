@@ -40,7 +40,7 @@ jobs:
       - name: Install Frontend Dependencies & Build
         run: |
           npm ci
-          npm run build -- --configuration=production
+          npm run build -- --configuration=production --base-href=/restobarswagger/
         working-directory: ${{ env.FRONTEND_DIR }}
 
       # ==========================================
