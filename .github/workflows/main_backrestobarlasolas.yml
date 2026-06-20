@@ -49,7 +49,7 @@ jobs:
       - name: Inject Angular Dist into Spring Boot Static Folder
         run: |
           mkdir -p ${{ env.BACKEND_DIR }}/src/main/resources/static
-          cp -r ${{ env.FRONTEND_DIR }}/dist/frontend-restobar-las-olas/* ${{ env.BACKEND_DIR }}/src/main/resources/static/
+          cp -r ${{ env.FRONTEND_DIR }}/dist/FrontendRestobarlasOlas/browser/* ${{ env.BACKEND_DIR }}/src/main/resources/static/
 
       # ==========================================
       # FASE 3: COMPILACIÓN DEL BACKEND (SPRING BOOT)
