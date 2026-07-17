@@ -57,6 +57,41 @@ export class AuthService {
     if (access) await this.loadProfile();
     return data;
   }
+  /**
+   * Envía un correo con un enlace de recuperación de contraseña (token de un
+   * solo uso, gestionado por Supabase Auth). Nunca debe revelarse al llamador
+   * si el email existe o no: siempre se resuelve exitosamente salvo un error
+   * real del proveedor (red, rate limit, etc.).
+   */
+  async requestPasswordReset(email: string) {
+    if (!this.isBrowser) throw new Error('requestPasswordReset: browser context required');
+    const supabase = await getSupabaseClient();
+    const redirectTo = `${window.location.origin}/restablecer-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+  }
+
+  /**
+   * Actualiza la contraseña usando la sesión de recuperación temporal que
+   * Supabase crea automáticamente al abrir el enlace del correo (token en el
+   * fragmento de la URL). Debe llamarse solo desde la página de destino de
+   * ese enlace.
+   */
+  async updatePassword(newPassword: string) {
+    if (!this.isBrowser) throw new Error('updatePassword: browser context required');
+    const supabase = await getSupabaseClient();
+    const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const access = sessionData.session?.access_token ?? null;
+    const refresh = sessionData.session?.refresh_token ?? null;
+    if (access) {
+      this.session.setSession(access, refresh);
+      await this.loadProfile();
+    }
+    return data;
+  }
+
   async signOut() {
     if (!this.isBrowser) return;
     const supabase = await getSupabaseClient();

@@ -1,25 +1,23 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { signal, inject } from '@angular/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
-  selector: 'auth-login-page',
-  imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatDividerModule],
+  selector: 'auth-forgot-password-page',
+  imports: [ReactiveFormsModule, MatCardModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatDividerModule],
   template: `
     <div class="page">
       <div class="auth-shell">
         <mat-card class="auth-card">
           <mat-card-header>
-            <mat-card-title>Iniciar sesión</mat-card-title>
-            <mat-card-subtitle>Ingresa con tu correo y contraseña</mat-card-subtitle>
+            <mat-card-title>Recuperar contraseña</mat-card-title>
+            <mat-card-subtitle>Te enviaremos un enlace para restablecerla</mat-card-subtitle>
           </mat-card-header>
 
           <mat-card-content>
@@ -30,14 +28,10 @@ import { MatDividerModule } from '@angular/material/divider';
                 <mat-error>Email inválido</mat-error>
               </mat-form-field>
 
-              <mat-form-field appearance="outline" class="full-width">
-                <mat-label>Contraseña</mat-label>
-                <input matInput id="password" formControlName="password" type="password" />
-                <mat-error>Contraseña requerida (mín. 8 caracteres)</mat-error>
-              </mat-form-field>
-
               <div class="actions">
-                <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Entrar</button>
+                <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || sending()">
+                  Enviar enlace
+                </button>
               </div>
             </form>
           </mat-card-content>
@@ -50,8 +44,7 @@ import { MatDividerModule } from '@angular/material/divider';
                 {{ feedbackMessage() }}
               </div>
             }
-            <p class="footer-link"><a (click)="goForgotPassword()">¿Olvidaste tu contraseña?</a></p>
-            <p class="footer-link">¿No tienes cuenta? <a (click)="goRegister()">Regístrate</a></p>
+            <p class="footer-link">¿Ya la recordaste? <a (click)="goLogin()">Inicia sesión</a></p>
           </mat-card-content>
         </mat-card>
       </div>
@@ -69,49 +62,40 @@ import { MatDividerModule } from '@angular/material/divider';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LoginPageComponent {
+export class ForgotPasswordPageComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
 
   form: FormGroup = this.fb.group({
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(8)]]
+    email: ['', [Validators.required, Validators.email]]
   });
 
+  sending = signal(false);
   feedbackMessage = signal<string | null>(null);
   feedbackType = signal<'success' | 'error' | null>(null);
+
+  private readonly genericMessage =
+    'Si el correo está registrado, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada.';
 
   async onSubmit() {
     this.feedbackMessage.set(null);
     this.feedbackType.set(null);
     if (this.form.invalid) return;
-    const { email, password } = this.form.value;
-    if (!email || !password) {
-      this.feedbackType.set('error');
-      this.feedbackMessage.set('Email y contraseña son requeridos');
-      return;
-    }
+    const { email } = this.form.value;
+    this.sending.set(true);
     try {
-      await this.auth.signIn(email, password);
+      await this.auth.requestPasswordReset(email);
+    } catch {
+      // Nunca revelamos si el correo existe o no, ni errores internos del proveedor.
+    } finally {
+      this.sending.set(false);
       this.feedbackType.set('success');
-      this.feedbackMessage.set('Inicio de sesión exitoso');
-      setTimeout(() => {
-        void this.router.navigateByUrl('/');
-      }, 900);
-    } catch (err: any) {
-      this.feedbackType.set('error');
-      this.feedbackMessage.set('Credenciales incorrectas');
+      this.feedbackMessage.set(this.genericMessage);
     }
   }
 
-  goRegister() {
-    this.router.navigate(['/register']);
-  }
-
-  goForgotPassword() {
-    this.router.navigate(['/recuperar-password']);
+  goLogin() {
+    this.router.navigate(['/login']);
   }
 }
-
-
